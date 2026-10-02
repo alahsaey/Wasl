@@ -296,4 +296,64 @@ export const CloudSyncService = {
       if (unsubPass) unsubPass();
     };
   },
+
+  /**
+   * Fetch all registered users, blocks, themes, and passwords from Cloud Firestore.
+   * Ensures that when the site is opened on ANY domain/host, all user updates are synchronized.
+   */
+  fetchAllDataFromCloud: async (): Promise<{
+    users: User[];
+    blocksMap: Record<string, Block[]>;
+    themesMap: Record<string, UserThemeConfig>;
+    passwordsMap: Record<string, string>;
+  } | null> => {
+    try {
+      const usersSnap = await getDocs(collection(db, 'users'));
+      if (usersSnap.empty) return null;
+
+      const users: User[] = [];
+      usersSnap.forEach((d) => {
+        if (d.exists()) {
+          users.push(d.data() as User);
+        }
+      });
+
+      const blocksSnap = await getDocs(collection(db, 'blocks'));
+      const blocksMap: Record<string, Block[]> = {};
+      blocksSnap.forEach((d) => {
+        if (d.exists()) {
+          const data = d.data();
+          if (Array.isArray(data?.blocks)) {
+            blocksMap[d.id] = data.blocks;
+          }
+        }
+      });
+
+      const themesSnap = await getDocs(collection(db, 'themes'));
+      const themesMap: Record<string, UserThemeConfig> = {};
+      themesSnap.forEach((d) => {
+        if (d.exists()) {
+          themesMap[d.id] = d.data() as UserThemeConfig;
+        }
+      });
+
+      const passwordsSnap = await getDocs(collection(db, 'passwords'));
+      const passwordsMap: Record<string, string> = {};
+      passwordsSnap.forEach((d) => {
+        if (d.exists() && d.data()?.password) {
+          passwordsMap[d.id] = d.data().password;
+        }
+      });
+
+      return {
+        users,
+        blocksMap,
+        themesMap,
+        passwordsMap,
+      };
+    } catch (e) {
+      console.warn('fetchAllDataFromCloud error:', e);
+      return null;
+    }
+  },
 };

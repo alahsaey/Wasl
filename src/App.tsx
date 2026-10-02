@@ -16,8 +16,11 @@ export default function App() {
   const [cloudLoadedUser, setCloudLoadedUser] = useState<User | null>(null);
   const [cloudLoading, setCloudLoading] = useState(false);
 
-  // Check initial URL parameters for public page (e.g. ?u=saleh or ?p=...)
+  // Check initial URL parameters for public page (e.g. ?u=saleh or ?p=...) & sync cloud data
   useEffect(() => {
+    // Sync all cloud data on boot so changing domains/links preserves 100% of user data
+    StorageService.syncAllFromCloud().catch(() => {});
+
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const userParam = params.get('u');

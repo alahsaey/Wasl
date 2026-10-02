@@ -28,13 +28,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onViewDemoPage 
   const [error, setError] = useState<string | null>(null);
 
   // Standard password login
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    setTimeout(() => {
-      const res = AuthService.login(identifier, password);
+    try {
+      const res = await AuthService.loginAsync(identifier, password);
       setLoading(false);
       if (res.success) {
         showToast(`أهلاً بك مجدداً، ${res.user?.fullName}`, 'success');
@@ -43,7 +43,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onViewDemoPage 
         setError(res.error || 'حدث خطأ أثناء تسجيل الدخول');
         showToast(res.error || 'خطأ في تسجيل الدخول', 'error');
       }
-    }, 250);
+    } catch (err: any) {
+      setLoading(false);
+      setError('حدث خطأ أثناء تسجيل الدخول، يرجى المحاولة مرة أخرى.');
+    }
   };
 
   // Biometric login

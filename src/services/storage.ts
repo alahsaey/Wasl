@@ -1079,6 +1079,73 @@ export const StorageService = {
     }
   },
 
+  syncAllFromCloud: async (): Promise<boolean> => {
+    try {
+      const cloudData = await CloudSyncService.fetchAllDataFromCloud();
+      if (!cloudData || !cloudData.users || cloudData.users.length === 0) return false;
+
+      // 1. Merge users
+      const localUsers = StorageService.getUsers();
+      const usersMap = new Map<string, User>();
+
+      cloudData.users.forEach((u) => {
+        if (u && u.id) usersMap.set(u.id, u);
+      });
+
+      localUsers.forEach((u) => {
+        if (u && u.id) {
+          const existing = usersMap.get(u.id);
+          if (!existing || new Date(u.updatedAt || 0) > new Date(existing.updatedAt || 0)) {
+            usersMap.set(u.id, u);
+          }
+        }
+      });
+
+      const finalUsers = Array.from(usersMap.values());
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(finalUsers));
+
+      // 2. Merge blocks
+      const allCloudBlocks: Block[] = [];
+      Object.values(cloudData.blocksMap).forEach((bList) => {
+        if (Array.isArray(bList)) allCloudBlocks.push(...bList);
+      });
+
+      const localBlocks = StorageService.getAllBlocks();
+      const blocksMap = new Map<string, Block>();
+
+      allCloudBlocks.forEach((b) => {
+        if (b && b.id) blocksMap.set(b.id, b);
+      });
+
+      localBlocks.forEach((b) => {
+        if (b && b.id) {
+          const existing = blocksMap.get(b.id);
+          if (!existing || new Date(b.updatedAt || 0) > new Date(existing.updatedAt || 0)) {
+            blocksMap.set(b.id, b);
+          }
+        }
+      });
+
+      localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(Array.from(blocksMap.values())));
+
+      // 3. Merge themes
+      const themes = StorageService.getAllThemes();
+      Object.assign(themes, cloudData.themesMap);
+      localStorage.setItem(STORAGE_KEYS.THEMES, JSON.stringify(themes));
+
+      // 4. Merge passwords
+      const passwords = StorageService.getPasswords();
+      Object.assign(passwords, cloudData.passwordsMap);
+      localStorage.setItem(STORAGE_KEYS.PASSWORDS, JSON.stringify(passwords));
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      console.warn('syncAllFromCloud error:', e);
+      return false;
+    }
+  },
+
   // Save decoded profile payload directly to local cache & notify listeners
   saveProfileFromDecoded: (decoded: { user: User; blocks: Block[]; theme?: UserThemeConfig }) => {
     try {

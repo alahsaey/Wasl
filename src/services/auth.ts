@@ -97,6 +97,44 @@ export const AuthService = {
     return { success: true, user: freshUser };
   },
 
+  loginAsync: async (identifier: string, pass: string): Promise<{ success: boolean; user?: User; error?: string }> => {
+    // 1. Try local login first
+    const localRes = AuthService.login(identifier, pass);
+    if (localRes.success) return localRes;
+
+    // 2. If local fails (e.g. brand new domain or clear cache), fetch account from Cloud Firestore
+    const cleanId = identifier.trim().toLowerCase().replace(/^@/, '');
+    const cloudResult = await StorageService.fetchPublicProfileFromCloud(cleanId);
+    if (cloudResult && cloudResult.user) {
+      if (cloudResult.user.status === 'suspended') {
+        return { success: false, error: 'هذا الحساب معطل حالياً من قِبل إدارة المنصة. يرجى التواصل مع الدعم.' };
+      }
+
+      // Check password
+      if (cloudResult.password && cloudResult.password === pass) {
+        StorageService.updateUser(cloudResult.user.id, { lastLoginAt: new Date().toISOString() });
+        const freshUser = StorageService.getUserById(cloudResult.user.id) || cloudResult.user;
+
+        localStorage.setItem(SESSION_KEY, JSON.stringify(freshUser));
+        localStorage.removeItem(IMPERSONATOR_KEY);
+
+        const state: AuthState = {
+          user: freshUser,
+          impersonator: null,
+          isAuthenticated: true,
+          isSuperAdmin: freshUser.role === 'super_admin',
+        };
+        notify(state);
+
+        return { success: true, user: freshUser };
+      } else if (cloudResult.password) {
+        return { success: false, error: 'كلمة المرور غير صحيحة، يرجى التحقق وإعادة المحاولة.' };
+      }
+    }
+
+    return localRes;
+  },
+
   loginWithBiometrics: (user: User): { success: boolean; user: User } => {
     StorageService.updateUser(user.id, { lastLoginAt: new Date().toISOString() });
     const freshUser = StorageService.getUserById(user.id)!;
