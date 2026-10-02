@@ -297,7 +297,7 @@ const initStorage = () => {
         status: 'active',
         planId: 'business',
         planExpiresAt: '2027-06-30',
-        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+        avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=saleh_alyassin_sa&backgroundColor=b6e3f4,c0aede,d1d4f9',
         bio: 'مستشار أعمال ومؤسس شركات ناشئة | أساعد رواد الأعمال في بناء ونمو مشاريعهم الرقمية والتوسع الاستثماري.',
         createdAt: '2026-01-15T09:30:00Z',
         updatedAt: '2026-03-20T14:15:00Z',
@@ -384,15 +384,15 @@ const initStorage = () => {
         id: 'block-saleh-1',
         userId: 'user-saleh-2',
         type: 'whatsapp',
-        title: 'محادثة مباشرة عبر واتساب',
-        subtitle: 'تواصل سريع ومباشر بخصوص الاستشارات والمشاريع',
+        title: 'واتساب',
+        subtitle: 'واتساب مباشر',
         phone: '966501234567',
-        message: 'السلام عليكم أ. صالح، وصلت إليك عن طريق صفحتك الرقمية وأرغب بحجز استشارة أعمال.',
+        message: 'السلام عليكم أ. صالح، وصلت إليك عن طريق صفحتك الرقمية.',
         isActive: true,
         order: 1,
         clicksCount: 344,
         highlight: true,
-        badge: 'متاح للرد السريع',
+        badge: 'وصل',
         createdAt: '2026-01-16T10:00:00Z',
         updatedAt: '2026-01-16T10:00:00Z',
       },
@@ -400,8 +400,8 @@ const initStorage = () => {
         id: 'block-saleh-2',
         userId: 'user-saleh-2',
         type: 'link',
-        title: 'بوت المحادثة...',
-        subtitle: 'تواصل وتفاعل فوري عبر تيليجرام',
+        title: 'بوت التحدث ا...',
+        subtitle: 'https://t.me/alahsaeybot',
         url: 'https://t.me/alahsaeybot',
         isActive: true,
         order: 2,
@@ -526,11 +526,30 @@ const initStorage = () => {
     localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(seedAuditLogs));
     localStorage.setItem(STORAGE_KEYS.ANALYTICS, JSON.stringify(seedAnalytics));
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
-    localStorage.setItem('wasl_storage_version', 'v2_live_update');
+    localStorage.setItem('wasl_storage_version', 'v4_saleh_live_sync');
   } else {
-    // Migrate existing visitor caches to version 2 (clean old deleted blocks)
-    const STORAGE_VERSION = 'v2_live_update';
+    // Migrate existing visitor caches to version 4 (clean old deleted blocks & update avatar)
+    const STORAGE_VERSION = 'v4_saleh_live_sync';
     if (localStorage.getItem('wasl_storage_version') !== STORAGE_VERSION) {
+      // 1. Migrate Users (Update Saleh's avatar to updated cartoon avatar)
+      const currentUsersStr = localStorage.getItem(STORAGE_KEYS.USERS);
+      if (currentUsersStr) {
+        try {
+          let currentUsers: User[] = JSON.parse(currentUsersStr);
+          const salehIdx = currentUsers.findIndex((u) => u.id === 'user-saleh-2' || u.username === 'saleh');
+          if (salehIdx !== -1) {
+            currentUsers[salehIdx] = {
+              ...currentUsers[salehIdx],
+              avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=saleh_alyassin_sa&backgroundColor=b6e3f4,c0aede,d1d4f9',
+            };
+            localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(currentUsers));
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      // 2. Migrate Blocks
       const currentBlocksStr = localStorage.getItem(STORAGE_KEYS.BLOCKS);
       if (currentBlocksStr) {
         try {
@@ -541,15 +560,15 @@ const initStorage = () => {
               id: 'block-saleh-1',
               userId: 'user-saleh-2',
               type: 'whatsapp',
-              title: 'محادثة مباشرة عبر واتساب',
-              subtitle: 'تواصل سريع ومباشر بخصوص الاستشارات والمشاريع',
+              title: 'واتساب',
+              subtitle: 'واتساب مباشر',
               phone: '966501234567',
-              message: 'السلام عليكم أ. صالح، وصلت إليك عن طريق صفحتك الرقمية وأرغب بحجز استشارة أعمال.',
+              message: 'السلام عليكم أ. صالح، وصلت إليك عن طريق صفحتك الرقمية.',
               isActive: true,
               order: 1,
               clicksCount: 344,
               highlight: true,
-              badge: 'متاح للرد السريع',
+              badge: 'وصل',
               createdAt: '2026-01-16T10:00:00Z',
               updatedAt: '2026-01-16T10:00:00Z',
             },
@@ -557,8 +576,8 @@ const initStorage = () => {
               id: 'block-saleh-2',
               userId: 'user-saleh-2',
               type: 'link',
-              title: 'بوت المحادثة...',
-              subtitle: 'تواصل وتفاعل فوري عبر تيليجرام',
+              title: 'بوت التحدث ا...',
+              subtitle: 'https://t.me/alahsaeybot',
               url: 'https://t.me/alahsaeybot',
               isActive: true,
               order: 2,
