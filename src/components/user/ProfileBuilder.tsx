@@ -15,6 +15,7 @@ import {
   Upload,
   BarChart2,
   ExternalLink,
+  Cloud,
 } from 'lucide-react';
 import { User, Block, BlockType, UserThemeConfig } from '../../types';
 import { StorageService } from '../../services/storage';
@@ -54,6 +55,7 @@ export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({
 
   // Drag and drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   const loadData = () => {
     setBlocks(StorageService.getUserBlocks(user.id));
@@ -62,12 +64,26 @@ export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({
 
   useEffect(() => {
     loadData();
+    // Auto-sync current profile to cloud on mount so public link/QR is always up to date
+    StorageService.syncUserToCloud(user.id).catch(() => {});
+
     const unsub = StorageService.subscribeToStorage(loadData);
     return unsub;
   }, [user.id]);
 
+  const handleManualCloudSync = async () => {
+    setSyncing(true);
+    const success = await StorageService.syncUserToCloud(user.id);
+    setSyncing(false);
+    if (success) {
+      showToast('تمت المزامنة السحابية وتحديث الباركود بنجاح ☁️ — التعديلات نشطة الآن لكل المشاهدين!', 'success');
+    } else {
+      showToast('تم الحفظ محلياً. تحقق من اتصال الإنترنت للمزامنة السحابية', 'info');
+    }
+  };
+
   // Profile Save
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     const updated = StorageService.updateUser(user.id, {
       fullName,
@@ -76,7 +92,8 @@ export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({
     });
     if (updated) {
       onUserUpdated(updated);
-      showToast('تم حفظ بيانات الملف الشخصي بنجاح!', 'success');
+      await StorageService.syncUserToCloud(user.id);
+      showToast('تم حفظ التعديلات ونشرها وتحديث الباركود سحابياً بنجاح! ☁️', 'success');
     }
   };
 
@@ -202,7 +219,18 @@ export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleManualCloudSync}
+                  disabled={syncing}
+                  className="flex items-center gap-1.5 py-2.5 px-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition border border-slate-200 dark:border-slate-700"
+                  title="تحديث ونشر التعديلات سحابياً فوراً لجميع ماسحي الباركود"
+                >
+                  <Cloud className={`w-4 h-4 ${syncing ? 'animate-bounce text-emerald-500' : 'text-emerald-600'}`} />
+                  <span>{syncing ? 'جاري المزامنة...' : 'تحديث ونشر الباركود ☁️'}</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => {

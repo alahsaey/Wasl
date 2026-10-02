@@ -20,9 +20,14 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
   isPreview = false,
   onBackToApp,
 }) => {
+  const [currentUser, setCurrentUser] = useState<User>(user);
   const [blocks, setBlocks] = useState<Block[]>(propBlocks || []);
   const [theme, setTheme] = useState<UserThemeConfig>(propTheme || StorageService.getUserTheme(user.id));
   const [showQrModal, setShowQrModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    setCurrentUser(user);
+  }, [user]);
 
   useEffect(() => {
     if (propBlocks) {
@@ -40,18 +45,38 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
     }
   }, [user.id, propTheme]);
 
+  // Fetch live updates from Cloud Firestore on mount to ensure barcode viewers always see latest changes
+  useEffect(() => {
+    if (isPreview) return;
+    let isMounted = true;
+
+    StorageService.fetchPublicProfileFromCloud(user.username).then((cloud) => {
+      if (cloud && isMounted) {
+        setCurrentUser(cloud.user);
+        setBlocks(cloud.blocks);
+        if (cloud.theme) {
+          setTheme(cloud.theme);
+        }
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user.username, isPreview]);
+
   // Track page view only once on real public page visit
   useEffect(() => {
     if (!isPreview) {
       StorageService.recordEvent({
-        userId: user.id,
+        userId: currentUser.id,
         type: 'page_view',
         device: window.innerWidth < 768 ? 'mobile' : 'desktop',
         browser: navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Safari',
         referrer: document.referrer || 'Direct',
       });
     }
-  }, [isPreview, user.id]);
+  }, [isPreview, currentUser.id]);
 
   // Compute profile image shape
   const getImageShapeClass = () => {
@@ -69,7 +94,7 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
     return { backgroundColor: theme.backgroundColor };
   };
 
-  const pageUrl = typeof window !== 'undefined' ? `${window.location.origin}/?u=${user.username}` : `https://nashrak.sa/${user.username}`;
+  const pageUrl = typeof window !== 'undefined' ? `${window.location.origin}/?u=${currentUser.username}` : `https://nashrak.sa/${currentUser.username}`;
 
   return (
     <div
@@ -107,10 +132,10 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
             >
               <img
                 src={
-                  user.avatarUrl ||
-                  `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.fullName)}`
+                  currentUser.avatarUrl ||
+                  `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.fullName)}`
                 }
-                alt={user.fullName}
+                alt={currentUser.fullName}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -126,16 +151,16 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
 
           {/* Full Name & Username */}
           <div className="space-y-1">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{user.fullName}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{currentUser.fullName}</h1>
             <p className="text-xs sm:text-sm font-mono opacity-80 dir-ltr text-center">
-              @{user.username}
+              @{currentUser.username}
             </p>
           </div>
 
           {/* Bio */}
-          {user.bio && (
+          {currentUser.bio && (
             <p className="text-xs sm:text-sm opacity-90 max-w-sm leading-relaxed px-4 text-center font-normal">
-              {user.bio}
+              {currentUser.bio}
             </p>
           )}
         </div>

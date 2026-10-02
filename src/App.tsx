@@ -11,6 +11,8 @@ import { User } from './types';
 export default function App() {
   const [authState, setAuthState] = useState<AuthState>(AuthService.getInitialState());
   const [publicViewUsername, setPublicViewUsername] = useState<string | null>(null);
+  const [cloudLoadedUser, setCloudLoadedUser] = useState<User | null>(null);
+  const [cloudLoading, setCloudLoading] = useState(false);
 
   // Check initial URL parameters for public page (e.g. ?u=saleh)
   useEffect(() => {
@@ -22,6 +24,30 @@ export default function App() {
       }
     }
   }, []);
+
+  // Sync public user from Cloud Firestore when requested (QR scan / public URL)
+  useEffect(() => {
+    if (publicViewUsername) {
+      const local = StorageService.getUserByUsername(publicViewUsername);
+      if (local) {
+        setCloudLoadedUser(local);
+      } else {
+        setCloudLoading(true);
+      }
+
+      StorageService.fetchPublicProfileFromCloud(publicViewUsername)
+        .then((cloud) => {
+          if (cloud) {
+            setCloudLoadedUser(cloud.user);
+          }
+        })
+        .finally(() => {
+          setCloudLoading(false);
+        });
+    } else {
+      setCloudLoadedUser(null);
+    }
+  }, [publicViewUsername]);
 
   // Subscribe to auth state updates
   useEffect(() => {
@@ -80,7 +106,18 @@ export default function App() {
 
   // 1. PUBLIC PROFILE VIEW (e.g., domain.com/?u=saleh or user clicked "زيارة صفحتي")
   if (publicViewUsername) {
-    const targetUser = StorageService.getUserByUsername(publicViewUsername);
+    if (cloudLoading && !cloudLoadedUser) {
+      return (
+        <ToastProvider>
+          <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-4 font-cairo text-center">
+            <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-sm font-bold">جاري تحميل أحدث بيانات الصفحة الرقمية...</p>
+          </div>
+        </ToastProvider>
+      );
+    }
+
+    const targetUser = cloudLoadedUser || StorageService.getUserByUsername(publicViewUsername);
 
     if (!targetUser) {
       return (

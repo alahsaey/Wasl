@@ -9,6 +9,7 @@ import {
   SocialPlatform,
   ThemePresetId,
 } from '../types';
+import { CloudSyncService } from './cloudSync';
 
 // Default theme configuration
 export const DEFAULT_THEME: UserThemeConfig = {
@@ -378,7 +379,7 @@ const initStorage = () => {
     };
 
     const seedBlocks: Block[] = [
-      // Blocks for Saleh Al-Yassin
+      // Blocks for Saleh Al-Yassin (reflecting current active links)
       {
         id: 'block-saleh-1',
         userId: 'user-saleh-2',
@@ -389,7 +390,7 @@ const initStorage = () => {
         message: 'السلام عليكم أ. صالح، وصلت إليك عن طريق صفحتك الرقمية وأرغب بحجز استشارة أعمال.',
         isActive: true,
         order: 1,
-        clicksCount: 342,
+        clicksCount: 344,
         highlight: true,
         badge: 'متاح للرد السريع',
         createdAt: '2026-01-16T10:00:00Z',
@@ -399,97 +400,14 @@ const initStorage = () => {
         id: 'block-saleh-2',
         userId: 'user-saleh-2',
         type: 'link',
-        title: 'موقعي الإلكتروني والمدونة',
-        subtitle: 'مقالات في ريادة الأعمال واستراتيجيات التوسع',
-        url: 'https://example.com/saleh-blog',
+        title: 'بوت المحادثة...',
+        subtitle: 'تواصل وتفاعل فوري عبر تيليجرام',
+        url: 'https://t.me/alahsaeybot',
         isActive: true,
         order: 2,
-        clicksCount: 512,
+        clicksCount: 1,
         createdAt: '2026-01-16T10:10:00Z',
         updatedAt: '2026-01-16T10:10:00Z',
-      },
-      {
-        id: 'block-saleh-3',
-        userId: 'user-saleh-2',
-        type: 'social_links',
-        title: 'حساباتي في منصات التواصل',
-        isActive: true,
-        order: 3,
-        clicksCount: 220,
-        socials: [
-          {
-            id: 'soc-1',
-            platform: 'x',
-            usernameOrUrl: 'saleh_alyassin',
-            formattedUrl: 'https://x.com/saleh_alyassin',
-            isActive: true,
-          },
-          {
-            id: 'soc-2',
-            platform: 'linkedin',
-            usernameOrUrl: 'saleh-alyassin',
-            formattedUrl: 'https://linkedin.com/in/saleh-alyassin',
-            isActive: true,
-          },
-          {
-            id: 'soc-3',
-            platform: 'youtube',
-            usernameOrUrl: '@SalehBusiness',
-            formattedUrl: 'https://youtube.com/@SalehBusiness',
-            isActive: true,
-          },
-          {
-            id: 'soc-4',
-            platform: 'instagram',
-            usernameOrUrl: 'saleh.alyassin',
-            formattedUrl: 'https://instagram.com/saleh.alyassin',
-            isActive: true,
-          },
-        ],
-        createdAt: '2026-01-16T10:20:00Z',
-        updatedAt: '2026-01-16T10:20:00Z',
-      },
-      {
-        id: 'block-saleh-4',
-        userId: 'user-saleh-2',
-        type: 'pdf',
-        title: 'تحميل الملف التعريفي وسيرة الإنجازات (PDF)',
-        subtitle: 'ملف تعريفي شامل بصيغة PDF يتضمن سابقة المشاريع',
-        fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-        fileName: 'Saleh-Profile-2026.pdf',
-        isActive: true,
-        order: 4,
-        clicksCount: 184,
-        createdAt: '2026-01-16T10:30:00Z',
-        updatedAt: '2026-01-16T10:30:00Z',
-      },
-      {
-        id: 'block-saleh-5',
-        userId: 'user-saleh-2',
-        type: 'location',
-        title: 'المكتب الرئيسي والاستشارات الحضورية',
-        subtitle: 'حي الصحافة، طريق أنس بن مالك، الرياض',
-        locationAddress: 'حي الصحافة، طريق أنس بن مالك، الرياض، المملكة العربية السعودية',
-        url: 'https://maps.google.com/?q=Riyadh+Saudi+Arabia',
-        isActive: true,
-        order: 5,
-        clicksCount: 88,
-        createdAt: '2026-01-16T10:40:00Z',
-        updatedAt: '2026-01-16T10:40:00Z',
-      },
-      {
-        id: 'block-saleh-6',
-        userId: 'user-saleh-2',
-        type: 'contact_card',
-        title: 'حفظ بيانات الاتصال في هاتفك (vCard)',
-        subtitle: 'أضف صالح مباشرة إلى جهات الاتصال بضغطة زر',
-        phone: '+966501234567',
-        email: 'saleh@example.com',
-        isActive: true,
-        order: 6,
-        clicksCount: 295,
-        createdAt: '2026-01-16T10:50:00Z',
-        updatedAt: '2026-01-16T10:50:00Z',
       },
 
       // Blocks for Noura
@@ -677,9 +595,18 @@ export const StorageService = {
       updatedAt: new Date().toISOString(),
     };
 
+    const updatedUser = users[index];
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
     notifyListeners();
-    return users[index];
+
+    // Auto-sync live profile to Cloud Firestore so all viewers/QR scanners see it immediately
+    CloudSyncService.syncProfileToCloud(
+      updatedUser,
+      StorageService.getUserBlocks(id),
+      StorageService.getUserTheme(id)
+    ).catch(() => {});
+
+    return updatedUser;
   },
 
   deleteUser: (id: string): boolean => {
@@ -731,6 +658,7 @@ export const StorageService = {
   saveBlock: (blockData: Omit<Block, 'id' | 'createdAt' | 'updatedAt' | 'clicksCount'> & { id?: string }): Block => {
     const all = StorageService.getAllBlocks();
     const now = new Date().toISOString();
+    let saved: Block;
 
     if (blockData.id) {
       const index = all.findIndex((b) => b.id === blockData.id);
@@ -740,31 +668,68 @@ export const StorageService = {
           ...blockData,
           updatedAt: now,
         };
+        saved = all[index];
         localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(all));
         notifyListeners();
-        return all[index];
+      } else {
+        saved = {
+          ...blockData,
+          id: blockData.id,
+          clicksCount: 0,
+          createdAt: now,
+          updatedAt: now,
+        };
+        all.push(saved);
+        localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(all));
+        notifyListeners();
       }
+    } else {
+      saved = {
+        ...blockData,
+        id: `block-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        clicksCount: 0,
+        createdAt: now,
+        updatedAt: now,
+      };
+      all.push(saved);
+      localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(all));
+      notifyListeners();
     }
 
-    const newBlock: Block = {
-      ...blockData,
-      id: `block-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      clicksCount: 0,
-      createdAt: now,
-      updatedAt: now,
-    };
+    // Auto-sync to Cloud Firestore
+    const blockUser = StorageService.getUserById(saved.userId);
+    if (blockUser) {
+      CloudSyncService.syncProfileToCloud(
+        blockUser,
+        StorageService.getUserBlocks(saved.userId),
+        StorageService.getUserTheme(saved.userId)
+      ).catch(() => {});
+    }
 
-    all.push(newBlock);
-    localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(all));
-    notifyListeners();
-    return newBlock;
+    return saved;
   },
 
   deleteBlock: (blockId: string): boolean => {
     let all = StorageService.getAllBlocks();
+    const target = all.find((b) => b.id === blockId);
+    const targetUserId = target?.userId;
+
     all = all.filter((b) => b.id !== blockId);
     localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(all));
     notifyListeners();
+
+    // Auto-sync to Cloud Firestore so removals immediately reflect for all viewers
+    if (targetUserId) {
+      const blockUser = StorageService.getUserById(targetUserId);
+      if (blockUser) {
+        CloudSyncService.syncProfileToCloud(
+          blockUser,
+          StorageService.getUserBlocks(targetUserId),
+          StorageService.getUserTheme(targetUserId)
+        ).catch(() => {});
+      }
+    }
+
     return true;
   },
 
@@ -779,6 +744,16 @@ export const StorageService = {
     });
     localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(all));
     notifyListeners();
+
+    // Auto-sync to Cloud Firestore
+    const user = StorageService.getUserById(userId);
+    if (user) {
+      CloudSyncService.syncProfileToCloud(
+        user,
+        StorageService.getUserBlocks(userId),
+        StorageService.getUserTheme(userId)
+      ).catch(() => {});
+    }
   },
 
   toggleBlockActive: (blockId: string): boolean => {
@@ -823,7 +798,65 @@ export const StorageService = {
     themes[userId] = updated;
     localStorage.setItem(STORAGE_KEYS.THEMES, JSON.stringify(themes));
     notifyListeners();
+
+    // Auto-sync theme to Cloud Firestore
+    const user = StorageService.getUserById(userId);
+    if (user) {
+      CloudSyncService.syncProfileToCloud(
+        user,
+        StorageService.getUserBlocks(userId),
+        updated
+      ).catch(() => {});
+    }
+
     return updated;
+  },
+
+  // --- CLOUD SYNC & CROSS-DEVICE PERSISTENCE (NETLIFY / QR CODE LIVE SYNC) ---
+  syncUserToCloud: async (userId: string): Promise<boolean> => {
+    const user = StorageService.getUserById(userId);
+    if (!user) return false;
+    const blocks = StorageService.getUserBlocks(userId);
+    const theme = StorageService.getUserTheme(userId);
+    return await CloudSyncService.syncProfileToCloud(user, blocks, theme);
+  },
+
+  fetchPublicProfileFromCloud: async (username: string) => {
+    try {
+      const result = await CloudSyncService.fetchProfileFromCloud(username);
+      if (!result) return null;
+
+      // 1. Cache/update user in localStorage
+      const users = StorageService.getUsers();
+      const existingIdx = users.findIndex(
+        (u) => u.id === result.user.id || u.username.toLowerCase() === username.toLowerCase()
+      );
+      if (existingIdx !== -1) {
+        users[existingIdx] = { ...users[existingIdx], ...result.user };
+      } else {
+        users.push(result.user);
+      }
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+
+      // 2. Cache/update blocks in localStorage (overwriting previous blocks for this user)
+      let allBlocks = StorageService.getAllBlocks();
+      allBlocks = allBlocks.filter((b) => b.userId !== result.user.id);
+      allBlocks.push(...result.blocks);
+      localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(allBlocks));
+
+      // 3. Cache/update theme
+      if (result.theme) {
+        const themes = StorageService.getAllThemes();
+        themes[result.user.id] = result.theme;
+        localStorage.setItem(STORAGE_KEYS.THEMES, JSON.stringify(themes));
+      }
+
+      notifyListeners();
+      return result;
+    } catch (e) {
+      console.warn('fetchPublicProfileFromCloud error:', e);
+      return null;
+    }
   },
 
   // --- PLANS ---
