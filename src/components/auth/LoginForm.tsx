@@ -18,6 +18,7 @@ import { AuthService } from '../../services/auth';
 import { BiometricService } from '../../services/biometrics';
 import { StorageService } from '../../services/storage';
 import { useToast } from '../common/Toast';
+import { BrandLogo } from '../common/BrandLogo';
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -110,10 +111,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onViewDemoPage 
 
       <div className="w-full max-w-md relative z-10 space-y-6">
         {/* Brand header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex w-14 h-14 rounded-2xl bg-emerald-600 items-center justify-center text-white text-2xl font-black shadow-lg shadow-emerald-500/20">
-            ن
-          </div>
+        <div className="text-center space-y-2 flex flex-col items-center">
+          <BrandLogo size="lg" variant="badge" />
           <h1 className="text-2xl font-extrabold text-white tracking-tight">
             روابط نشرك المفضلة
           </h1>

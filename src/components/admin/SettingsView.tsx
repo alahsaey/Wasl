@@ -189,6 +189,53 @@ export const SettingsView: React.FC = () => {
         onSubmit={handleSave}
         className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-5"
       >
+        {/* Admin & Platform Logo Section */}
+        <div className="p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-emerald-500 shadow-md bg-white dark:bg-slate-800 shrink-0">
+              <img
+                src={StorageService.getAdminAvatar()}
+                alt="أيقونة المسؤول وشعار المنصة"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
+                أيقونة وشعار المنصة الرسمي (أيقونة المسؤول)
+              </h4>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                تُعتمد هذه الأيقونة تلقائياً كشعار رسمي للمنصة، وتظهر مفرغة ونظيفة بدون خلفية أثناء تثبيت التطبيق على الجوال أو الكمبيوتر.
+              </p>
+            </div>
+          </div>
+
+          <label className="flex items-center gap-1.5 py-2 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold cursor-pointer transition shadow-xs shrink-0">
+            <Upload className="w-3.5 h-3.5" />
+            <span>تغيير الأيقونة</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                  const b64 = ev.target?.result as string;
+                  if (b64) {
+                    const admin = StorageService.getUsers().find((u) => u.role === 'super_admin' || u.id === 'user-admin-1');
+                    if (admin) {
+                      StorageService.updateUser(admin.id, { avatarUrl: b64 });
+                      showToast('تم تحديث أيقونة المسؤول وشعار المنصة بنجاح!', 'success');
+                    }
+                  }
+                };
+                reader.readAsDataURL(file);
+              }}
+            />
+          </label>
+        </div>
+
         <div className="space-y-1">
           <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
             اسم المنصة

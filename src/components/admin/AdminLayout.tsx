@@ -25,6 +25,7 @@ import { AuditLogsView } from './AuditLogsView';
 import { SettingsView } from './SettingsView';
 import { UserCreateModal } from './UserCreateModal';
 import { useToast } from '../common/Toast';
+import { BrandLogo } from '../common/BrandLogo';
 
 export type AdminTab =
   | 'dashboard'
@@ -76,19 +77,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       <aside className="hidden lg:flex flex-col w-64 bg-white dark:bg-slate-900 border-l border-slate-200/80 dark:border-slate-800 shrink-0 sticky top-0 h-screen z-20">
         {/* Brand */}
         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-black text-lg shadow-sm">
-              ن
-            </div>
-            <div>
-              <span className="font-extrabold text-sm tracking-tight block leading-tight">
-                روابط نشرك
-              </span>
-              <span className="text-[10px] text-emerald-600 font-bold block leading-tight">
-                لوحة تحكم Admin
-              </span>
-            </div>
-          </div>
+          <BrandLogo size="md" variant="badge" showText={true} subtitle="لوحة تحكم Admin" />
         </div>
 
         {/* Navigation Items (9 items) */}
@@ -152,12 +141,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           <div className="relative w-72 max-w-[85vw] bg-white dark:bg-slate-900 h-full p-4 flex flex-col z-10 shadow-2xl overflow-y-auto">
             {/* Drawer Header with Quick Logout Button */}
             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800 shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow-xs">
-                  ن
-                </div>
-                <div className="font-bold text-sm">روابط نشرك (Admin)</div>
-              </div>
+              <BrandLogo size="sm" variant="badge" showText={true} subtitle="Admin" />
 
               <div className="flex items-center gap-1.5">
                 {/* Fast Top Logout button - completely immune to any bottom floating badges */}

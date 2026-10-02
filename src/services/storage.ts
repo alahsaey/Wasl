@@ -621,6 +621,18 @@ export const StorageService = {
     return StorageService.getUsers().find((u) => u.username.toLowerCase() === clean);
   },
 
+  getAdminAvatar: (): string => {
+    try {
+      const admin = StorageService.getUsers().find((u) => u.role === 'super_admin' || u.id === 'user-admin-1');
+      if (admin?.avatarUrl) return admin.avatarUrl;
+      const settings = StorageService.getSettings();
+      if ((settings as any)?.logoUrl) return (settings as any).logoUrl;
+      return 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80';
+    } catch {
+      return 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80';
+    }
+  },
+
   createUser: (userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>, tempPassword?: string): User => {
     const users = StorageService.getUsers();
     const id = `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;

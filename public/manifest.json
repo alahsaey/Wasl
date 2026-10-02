@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "name": "روابط نشرك | منصة الهوية الرقمية",
+  "short_name": "نشرك",
+  "description": "منصة SaaS عربية متكاملة لإنشاء وإدارة صفحات الهوية الرقمية والروابط الذكية.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#10b981",
+  "background_color": "#020617",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
