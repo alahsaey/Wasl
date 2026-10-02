@@ -46,6 +46,10 @@ export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({
   const [fullName, setFullName] = useState(user.fullName);
   const [bio, setBio] = useState(user.bio || '');
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl || '');
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState(theme.backgroundImageUrl || '');
+  const [bgImageOpacity, setBgImageOpacity] = useState(
+    theme.bgImageOpacity !== undefined ? theme.bgImageOpacity : 0.35
+  );
 
   // Modal states
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -59,7 +63,10 @@ export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({
 
   const loadData = () => {
     setBlocks(StorageService.getUserBlocks(user.id));
-    setTheme(StorageService.getUserTheme(user.id));
+    const currentTheme = StorageService.getUserTheme(user.id);
+    setTheme(currentTheme);
+    setBackgroundImageUrl(currentTheme.backgroundImageUrl || '');
+    setBgImageOpacity(currentTheme.bgImageOpacity !== undefined ? currentTheme.bgImageOpacity : 0.35);
   };
 
   useEffect(() => {
@@ -85,15 +92,22 @@ export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({
   // Profile Save
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    const updated = StorageService.updateUser(user.id, {
+    const updatedUser = StorageService.updateUser(user.id, {
       fullName,
       bio,
       avatarUrl,
     });
-    if (updated) {
-      onUserUpdated(updated);
+
+    const updatedTheme = StorageService.saveUserTheme(user.id, {
+      backgroundImageUrl,
+      bgImageOpacity,
+    });
+    setTheme(updatedTheme);
+
+    if (updatedUser) {
+      onUserUpdated(updatedUser);
       await StorageService.syncUserToCloud(user.id);
-      showToast('تم حفظ التعديلات ونشرها وتحديث الباركود سحابياً بنجاح! ☁️', 'success');
+      showToast('تم حفظ صورة الملف وصورة الخلفية وبياناتك ونشرها سحابياً بنجاح! ☁️', 'success');
     }
   };
 
@@ -489,12 +503,53 @@ export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({
 
             {/* Avatar upload / input with client-side compression */}
             <ImageUploadInput
-              label="الصورة الشخصية أو الشعار (Avatar)"
+              label="1. الصورة الشخصية أو الشعار الخاص بك (Avatar)"
               value={avatarUrl}
               onChange={(url) => setAvatarUrl(url)}
               fallbackName={fullName}
               shape={theme.imageShape === 'circle' ? 'circle' : 'square'}
             />
+
+            {/* Custom Background Image upload */}
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-3">
+              <ImageUploadInput
+                label="2. صورة خلفية الصفحة المخصصة (تظهر مفرغة وشفافة خلف صفحتك)"
+                value={backgroundImageUrl}
+                onChange={(url) => setBackgroundImageUrl(url)}
+              />
+
+              {backgroundImageUrl && (
+                <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center justify-between text-xs">
+                    <label className="font-semibold text-slate-700 dark:text-slate-300">
+                      درجة شفافية صورة الخلفية
+                    </label>
+                    <span className="font-mono font-bold text-emerald-600">
+                      {Math.round(bgImageOpacity * 100)}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.05"
+                    max="1.0"
+                    step="0.05"
+                    value={bgImageOpacity}
+                    onChange={(e) => setBgImageOpacity(parseFloat(e.target.value))}
+                    className="w-full accent-emerald-600 cursor-pointer"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBackgroundImageUrl('');
+                      setBgImageOpacity(0.35);
+                    }}
+                    className="text-xs text-rose-600 font-bold hover:underline"
+                  >
+                    إزالة صورة الخلفية
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Full Name */}
             <div className="space-y-1">

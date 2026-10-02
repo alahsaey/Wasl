@@ -28,6 +28,8 @@ export const UserEditModal: React.FC<UserEditModalProps> = ({
   const [planExpiresAt, setPlanExpiresAt] = useState('');
   const [status, setStatus] = useState<AccountStatus>('active');
   const [newPassword, setNewPassword] = useState('');
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState('');
+  const [bgImageOpacity, setBgImageOpacity] = useState(0.35);
 
   useEffect(() => {
     if (user) {
@@ -39,6 +41,10 @@ export const UserEditModal: React.FC<UserEditModalProps> = ({
       setPlanExpiresAt(user.planExpiresAt || '2027-12-31');
       setStatus(user.status);
       setNewPassword('');
+
+      const theme = StorageService.getUserTheme(user.id);
+      setBackgroundImageUrl(theme?.backgroundImageUrl || '');
+      setBgImageOpacity(theme?.bgImageOpacity !== undefined ? theme.bgImageOpacity : 0.35);
     }
   }, [user, isOpen]);
 
@@ -56,6 +62,13 @@ export const UserEditModal: React.FC<UserEditModalProps> = ({
       planExpiresAt,
       status,
     });
+
+    StorageService.saveUserTheme(user.id, {
+      backgroundImageUrl,
+      bgImageOpacity,
+    });
+
+    StorageService.syncUserToCloud(user.id).catch(() => {});
 
     if (newPassword.trim().length > 0) {
       StorageService.resetPassword(user.id, newPassword.trim());
@@ -98,11 +111,37 @@ export const UserEditModal: React.FC<UserEditModalProps> = ({
       <form onSubmit={handleSubmit} className="space-y-4 text-right font-cairo">
         {/* Avatar Upload */}
         <ImageUploadInput
-          label="الصورة الشخصية أو الشعار"
+          label="الصورة الشخصية أو الشعار (Avatar)"
           value={avatarUrl}
           onChange={(url) => setAvatarUrl(url)}
           fallbackName={fullName}
         />
+
+        {/* Custom Background Image Upload */}
+        <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-3">
+          <ImageUploadInput
+            label="صورة خلفية الصفحة المخصصة للحساب"
+            value={backgroundImageUrl}
+            onChange={(url) => setBackgroundImageUrl(url)}
+          />
+          {backgroundImageUrl && (
+            <div className="space-y-1.5 text-xs">
+              <div className="flex justify-between font-semibold text-slate-700 dark:text-slate-300">
+                <span>شفافية صورة الخلفية</span>
+                <span className="text-emerald-600 font-bold">{Math.round(bgImageOpacity * 100)}%</span>
+              </div>
+              <input
+                type="range"
+                min="0.05"
+                max="1.0"
+                step="0.05"
+                value={bgImageOpacity}
+                onChange={(e) => setBgImageOpacity(parseFloat(e.target.value))}
+                className="w-full accent-emerald-600 cursor-pointer"
+              />
+            </div>
+          )}
+        </div>
 
         {/* Full Name */}
         <div className="space-y-1">
