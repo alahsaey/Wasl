@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme {
+  --font-cairo: 'Cairo', 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
+  --font-ibm: 'IBM Plex Sans Arabic', 'Cairo', system-ui, sans-serif;
+}
+
+:root {
+  direction: rtl;
+  font-family: var(--font-cairo);
+}
+
+/* Custom modern scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.6);
+}
+

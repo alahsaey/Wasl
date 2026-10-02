@@ -1,0 +1,6 @@
+{
+  "name": "روابط نشرك المفضلة",
+  "description": "منصة SaaS عربية متكاملة لإدارة الهوية الرقمية وصفحات الروابط الذكية للأفراد والشركات والرواد.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

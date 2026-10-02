@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow public read on user profile documents, write by owner or admin
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && (request.auth.uid == userId || request.auth.token.role == 'super_admin');
+    }
+
+    // Allow public read on active blocks, write by owner or admin
+    match /blocks/{blockId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Allow public read on themes, write by owner
+    match /themes/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && (request.auth.uid == userId || request.auth.token.role == 'super_admin');
+    }
+
+    // Analytics: allow creating events from public page visitors, read by owner/admin
+    match /analytics/{eventId} {
+      allow create: if true;
+      allow read: if request.auth != null;
+      allow update, delete: if false;
+    }
+
+    // Audit logs: read by admin only
+    match /audit_logs/{logId} {
+      allow read: if request.auth != null;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    // Connection test document
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+  }
+}

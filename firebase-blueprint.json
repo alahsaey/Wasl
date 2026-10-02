@@ -1,0 +1,132 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "User profile and account information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fullName": { "type": "string" },
+        "username": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "role": { "type": "string", "enum": ["super_admin", "member"] },
+        "status": { "type": "string", "enum": ["active", "suspended", "pending"] },
+        "planId": { "type": "string", "enum": ["free", "pro", "business"] },
+        "planExpiresAt": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "bio": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "lastLoginAt": { "type": "string" }
+      },
+      "required": ["id", "fullName", "username", "email", "role", "status", "planId", "createdAt", "updatedAt"]
+    },
+    "block": {
+      "title": "Block",
+      "description": "Interactive content block or link in user profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "type": { "type": "string" },
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "url": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "order": { "type": "number" },
+        "clicksCount": { "type": "number" },
+        "phone": { "type": "string" },
+        "message": { "type": "string" },
+        "email": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "videoUrl": { "type": "string" },
+        "fileUrl": { "type": "string" },
+        "locationAddress": { "type": "string" },
+        "highlight": { "type": "boolean" },
+        "badge": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "type", "title", "isActive", "order", "clicksCount"]
+    },
+    "user_theme": {
+      "title": "UserTheme",
+      "description": "Visual style and theme configuration for user profile",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "presetId": { "type": "string" },
+        "primaryColor": { "type": "string" },
+        "backgroundColor": { "type": "string" },
+        "backgroundType": { "type": "string" },
+        "textColor": { "type": "string" },
+        "cardBgColor": { "type": "string" },
+        "buttonStyle": { "type": "string" },
+        "buttonShadow": { "type": "string" },
+        "borderRadius": { "type": "string" },
+        "fontFamily": { "type": "string" },
+        "imageShape": { "type": "string" },
+        "showVerifiedBadge": { "type": "boolean" },
+        "showBranding": { "type": "boolean" }
+      },
+      "required": ["userId", "presetId", "primaryColor", "backgroundColor", "buttonStyle"]
+    },
+    "analytics_event": {
+      "title": "AnalyticsEvent",
+      "description": "Page view or link click tracking event",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["page_view", "link_click"] },
+        "blockId": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "device": { "type": "string" },
+        "browser": { "type": "string" },
+        "referrer": { "type": "string" }
+      },
+      "required": ["id", "userId", "type", "timestamp", "device"]
+    },
+    "audit_log": {
+      "title": "AuditLog",
+      "description": "Administrative audit trail log entry",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "actorId": { "type": "string" },
+        "actorName": { "type": "string" },
+        "actorRole": { "type": "string" },
+        "action": { "type": "string" },
+        "targetId": { "type": "string" },
+        "targetName": { "type": "string" },
+        "details": { "type": "string" },
+        "ip": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "actorId", "actorName", "action", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "User profiles and account data"
+    },
+    "/blocks/{blockId}": {
+      "schema": "block",
+      "description": "User profile blocks and links"
+    },
+    "/themes/{userId}": {
+      "schema": "user_theme",
+      "description": "Customized themes per user"
+    },
+    "/analytics/{eventId}": {
+      "schema": "analytics_event",
+      "description": "Platform and profile analytics events"
+    },
+    "/audit_logs/{logId}": {
+      "schema": "audit_log",
+      "description": "System and administrative audit logs"
+    }
+  }
+}
