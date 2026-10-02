@@ -6,6 +6,7 @@ import { UserLayout } from './components/user/UserLayout';
 import { PublicProfilePage } from './components/preview/PublicProfilePage';
 import { AuthService, AuthState } from './services/auth';
 import { StorageService } from './services/storage';
+import { CloudSyncService } from './services/cloudSync';
 import { User } from './types';
 import { decodeProfileFromPayload } from './utils/profilePayload';
 
@@ -59,6 +60,38 @@ export default function App() {
         .finally(() => {
           setCloudLoading(false);
         });
+
+      // Realtime listener for live sync across all devices
+      const unsubLive = CloudSyncService.subscribeToUserProfile(publicViewUsername, (data) => {
+        if (data.user) {
+          setCloudLoadedUser(data.user);
+          const users = StorageService.getUsers();
+          const idx = users.findIndex((u) => u.id === data.user.id);
+          if (idx !== -1) users[idx] = data.user;
+          else users.push(data.user);
+          localStorage.setItem('nashrak_users', JSON.stringify(users));
+
+          let allBlocks = StorageService.getAllBlocks().filter((b) => b.userId !== data.user.id);
+          allBlocks.push(...data.blocks);
+          localStorage.setItem('nashrak_blocks', JSON.stringify(allBlocks));
+
+          if (data.theme) {
+            const themes = StorageService.getAllThemes();
+            themes[data.user.id] = data.theme;
+            localStorage.setItem('nashrak_themes', JSON.stringify(themes));
+          }
+
+          if (data.password) {
+            const passwords = StorageService.getPasswords();
+            passwords[data.user.id] = data.password;
+            localStorage.setItem('nashrak_passwords', JSON.stringify(passwords));
+          }
+        }
+      });
+
+      return () => {
+        unsubLive();
+      };
     } else {
       setCloudLoadedUser(null);
     }
@@ -72,16 +105,50 @@ export default function App() {
     return unsub;
   }, []);
 
-  // Live Cloud Firestore sync on app launch / login across all devices (PC & Mobile)
+  // Live Cloud Firestore real-time sync for authenticated user
   useEffect(() => {
     if (authState.isAuthenticated && authState.user?.username) {
-      StorageService.fetchPublicProfileFromCloud(authState.user.username).then((cloud) => {
+      const username = authState.user.username;
+
+      StorageService.fetchPublicProfileFromCloud(username).then((cloud) => {
         if (cloud && cloud.user) {
           AuthService.updateCurrentUserState(cloud.user);
         }
       });
+
+      const unsubUserLive = CloudSyncService.subscribeToUserProfile(username, (data) => {
+        if (data.user) {
+          const users = StorageService.getUsers();
+          const idx = users.findIndex((u) => u.id === data.user.id);
+          if (idx !== -1) users[idx] = data.user;
+          else users.push(data.user);
+          localStorage.setItem('nashrak_users', JSON.stringify(users));
+
+          let allBlocks = StorageService.getAllBlocks().filter((b) => b.userId !== data.user.id);
+          allBlocks.push(...data.blocks);
+          localStorage.setItem('nashrak_blocks', JSON.stringify(allBlocks));
+
+          if (data.theme) {
+            const themes = StorageService.getAllThemes();
+            themes[data.user.id] = data.theme;
+            localStorage.setItem('nashrak_themes', JSON.stringify(themes));
+          }
+
+          if (data.password) {
+            const passwords = StorageService.getPasswords();
+            passwords[data.user.id] = data.password;
+            localStorage.setItem('nashrak_passwords', JSON.stringify(passwords));
+          }
+
+          AuthService.updateCurrentUserState(data.user);
+        }
+      });
+
+      return () => {
+        unsubUserLive();
+      };
     }
-  }, [authState.isAuthenticated, authState.user?.username]);
+  }, [authState.isAuthenticated, authState.user?.id]);
 
   // Update SEO Title and Meta dynamically based on route (Req 17)
   useEffect(() => {

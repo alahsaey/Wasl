@@ -837,7 +837,9 @@ export const StorageService = {
     if (!user) return false;
     const blocks = StorageService.getUserBlocks(userId);
     const theme = StorageService.getUserTheme(userId);
-    return await CloudSyncService.syncProfileToCloud(user, blocks, theme);
+    const passwords = StorageService.getPasswords();
+    const pass = passwords[userId];
+    return await CloudSyncService.syncProfileToCloud(user, blocks, theme, pass);
   },
 
   fetchPublicProfileFromCloud: async (username: string) => {
@@ -868,6 +870,13 @@ export const StorageService = {
         const themes = StorageService.getAllThemes();
         themes[result.user.id] = result.theme;
         localStorage.setItem(STORAGE_KEYS.THEMES, JSON.stringify(themes));
+      }
+
+      // 4. Cache/update password
+      if (result.password) {
+        const passwords = StorageService.getPasswords();
+        passwords[result.user.id] = result.password;
+        localStorage.setItem(STORAGE_KEYS.PASSWORDS, JSON.stringify(passwords));
       }
 
       notifyListeners();
