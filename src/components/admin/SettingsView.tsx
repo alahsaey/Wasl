@@ -1,9 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StorageService } from '../../services/storage';
 import { AuthService } from '../../services/auth';
 import { BiometricService, BiometricRegistration } from '../../services/biometrics';
 import { useToast } from '../common/Toast';
-import { Settings, Shield, Globe, MessageSquare, Fingerprint, CheckCircle2, ShieldCheck } from 'lucide-react';
+import {
+  Settings,
+  Shield,
+  Globe,
+  MessageSquare,
+  Fingerprint,
+  CheckCircle2,
+  ShieldCheck,
+  Download,
+  Upload,
+  RefreshCw,
+  Database,
+} from 'lucide-react';
 import { BiometricSetupModal } from '../common/BiometricModal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 
@@ -11,12 +23,14 @@ export const SettingsView: React.FC = () => {
   const { showToast } = useToast();
   const [settings, setSettings] = useState(StorageService.getSettings());
   const currentUser = AuthService.getInitialState().user;
+  const backupInputRef = useRef<HTMLInputElement>(null);
 
   // Biometrics states
   const [isBiometricRegistered, setIsBiometricRegistered] = useState(false);
   const [userRegistration, setUserRegistration] = useState<BiometricRegistration | null>(null);
   const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
 
   const checkBiometrics = () => {
     if (!currentUser) return;
@@ -54,6 +68,43 @@ export const SettingsView: React.FC = () => {
       ip: '192.168.1.1',
     });
     showToast('تم حفظ إعدادات المنصة بنجاح!', 'success');
+  };
+
+  const handleExportData = () => {
+    const jsonStr = StorageService.exportAllData();
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nashrak-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('تم تصدير ملف النسخة الاحتياطية بنجاح!', 'success');
+  };
+
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const content = ev.target?.result as string;
+      const success = StorageService.importAllData(content);
+      if (success) {
+        showToast('تم استيراد كافة البيانات بنجاح! جاري تحديث الصفحة...', 'success');
+        setTimeout(() => window.location.reload(), 800);
+      } else {
+        showToast('الملف غير صالح أو التنسيق غير متطابق', 'error');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleReset = () => {
+    StorageService.resetToDefaults();
+    setShowResetDialog(false);
+    showToast('تمت استعادة البيانات الافتراضية بنجاح!', 'info');
+    setTimeout(() => window.location.reload(), 800);
   };
 
   return (
@@ -216,6 +267,60 @@ export const SettingsView: React.FC = () => {
         </div>
       </form>
 
+      {/* Backup, Export & Import Data Card (Essential for GitHub & cross-domain transfers) */}
+      <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+        <div className="space-y-1">
+          <h3 className="font-bold text-base text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <Database className="w-5 h-5 text-emerald-600" />
+            <span>النسخ الاحتياطي ونقل بيانات المنصة (Export & Import)</span>
+          </h3>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            استخدم هذه الميزة لنقل حساباتك وصفحاتك وروابطك من بيئة العمل إلى موقعك على GitHub بنقرة واحدة، أو للاحتفاظ بنسخة احتياطية كاملة.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+          {/* Export JSON */}
+          <button
+            type="button"
+            onClick={handleExportData}
+            className="flex items-center justify-center gap-2 py-3 px-4 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-2xl text-xs font-bold transition shadow-sm"
+          >
+            <Download className="w-4 h-4 text-emerald-400" />
+            <span>تحميل نسخة احتياطية (تصدير JSON)</span>
+          </button>
+
+          {/* Import JSON */}
+          <div>
+            <input
+              ref={backupInputRef}
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={handleImportFile}
+            />
+            <button
+              type="button"
+              onClick={() => backupInputRef.current?.click()}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold transition shadow-sm"
+            >
+              <Upload className="w-4 h-4" />
+              <span>استيراد بيانات (ملف JSON)</span>
+            </button>
+          </div>
+
+          {/* Reset to defaults */}
+          <button
+            type="button"
+            onClick={() => setShowResetDialog(true)}
+            className="flex items-center justify-center gap-2 py-3 px-4 border border-rose-200 dark:border-rose-900 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-2xl text-xs font-semibold transition"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span>استعادة البيانات الافتراضية</span>
+          </button>
+        </div>
+      </div>
+
       {/* Setup Modal */}
       {currentUser && (
         <BiometricSetupModal
@@ -236,6 +341,18 @@ export const SettingsView: React.FC = () => {
         isDestructive={true}
         onConfirm={handleDeactivate}
         onCancel={() => setShowDeactivateDialog(false)}
+      />
+
+      {/* Reset to defaults dialog */}
+      <ConfirmDialog
+        isOpen={showResetDialog}
+        title="تأكيد استعادة البيانات الافتراضية"
+        message="هل أنت متأكد من رغبتك في استعادة الحسابات والبيانات الأولية؟ سيتم مسح أي تعديلات غير محفوظة."
+        confirmText="نعم، استعادة البيانات"
+        cancelText="إلغاء"
+        isDestructive={true}
+        onConfirm={handleReset}
+        onCancel={() => setShowResetDialog(false)}
       />
     </div>
   );

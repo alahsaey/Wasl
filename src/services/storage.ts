@@ -966,6 +966,54 @@ export const StorageService = {
     notifyListeners();
   },
 
+  // --- DATA BACKUP & EXPORT/IMPORT (For migrating between domains/GitHub) ---
+  exportAllData: (): string => {
+    try {
+      const payload = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        users: StorageService.getUsers(),
+        passwords: StorageService.getPasswords(),
+        blocks: StorageService.getAllBlocks(),
+        themes: JSON.parse(localStorage.getItem(STORAGE_KEYS.THEMES) || '{}'),
+        settings: StorageService.getSettings(),
+        plans: StorageService.getPlans(),
+      };
+      return JSON.stringify(payload, null, 2);
+    } catch (e) {
+      console.error('Export error:', e);
+      return '';
+    }
+  },
+
+  importAllData: (jsonStr: string): boolean => {
+    try {
+      const data = JSON.parse(jsonStr);
+      if (!data || !Array.isArray(data.users)) {
+        return false;
+      }
+
+      if (data.users) localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(data.users));
+      if (data.passwords) localStorage.setItem(STORAGE_KEYS.PASSWORDS, JSON.stringify(data.passwords));
+      if (data.blocks) localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(data.blocks));
+      if (data.themes) localStorage.setItem(STORAGE_KEYS.THEMES, JSON.stringify(data.themes));
+      if (data.settings) localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(data.settings));
+      if (data.plans) localStorage.setItem(STORAGE_KEYS.PLANS, JSON.stringify(data.plans));
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      console.error('Import error:', e);
+      return false;
+    }
+  },
+
+  resetToDefaults: () => {
+    Object.values(STORAGE_KEYS).forEach((k) => localStorage.removeItem(k));
+    initStorage();
+    notifyListeners();
+  },
+
   // Helpers for Social Media URL Formatting (Req 6)
   formatSocialUrl: (platform: SocialPlatform, usernameOrUrl: string): string => {
     const val = usernameOrUrl.trim();
