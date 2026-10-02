@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { QrCode, Share2, CheckCircle2, ArrowRight } from 'lucide-react';
+import { QrCode, Share2, CheckCircle2, LogIn, ArrowRight, Home } from 'lucide-react';
 import { User, Block, UserThemeConfig } from '../../types';
 import { StorageService } from '../../services/storage';
+import { CloudSyncService } from '../../services/cloudSync';
 import { BlockRenderer } from './BlockRenderer';
 import { QRCodeModal } from '../common/QRCodeModal';
 
@@ -45,13 +46,13 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
     }
   }, [user.id, propTheme]);
 
-  // Fetch live updates from Cloud Firestore on mount to ensure barcode viewers always see latest changes
+  // Real-time live Cloud Firestore listener for instant multi-device sync
   useEffect(() => {
     if (isPreview) return;
-    let isMounted = true;
 
+    // 1. Initial Cloud fetch
     StorageService.fetchPublicProfileFromCloud(user.username).then((cloud) => {
-      if (cloud && isMounted) {
+      if (cloud) {
         setCurrentUser(cloud.user);
         setBlocks(cloud.blocks);
         if (cloud.theme) {
@@ -60,8 +61,19 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
       }
     });
 
+    // 2. Real-time live listener (onSnapshot)
+    const unsub = CloudSyncService.subscribeToUserProfile(user.username, (data) => {
+      if (data.user) {
+        setCurrentUser(data.user);
+        setBlocks(data.blocks);
+        if (data.theme) {
+          setTheme(data.theme);
+        }
+      }
+    });
+
     return () => {
-      isMounted = false;
+      unsub();
     };
   }, [user.username, isPreview]);
 
@@ -77,6 +89,15 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
       });
     }
   }, [isPreview, currentUser.id]);
+
+  // Handle navigate to dashboard / login
+  const handleGoToApp = () => {
+    if (onBackToApp) {
+      onBackToApp();
+    } else if (typeof window !== 'undefined') {
+      window.location.href = window.location.origin;
+    }
+  };
 
   // Compute profile image shape
   const getImageShapeClass = () => {
@@ -94,29 +115,37 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
     return { backgroundColor: theme.backgroundColor };
   };
 
-  const pageUrl = typeof window !== 'undefined' ? `${window.location.origin}/?u=${currentUser.username}` : `https://nashrak.sa/${currentUser.username}`;
+  const pageUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/?u=${currentUser.username}`
+      : `https://wasl-sa.netlify.app/?u=${currentUser.username}`;
 
   return (
     <div
       className={`min-h-screen w-full transition-colors duration-300 font-cairo flex flex-col items-center ${
-        isPreview ? 'py-6 px-4' : 'py-10 px-4'
+        isPreview ? 'py-6 px-4' : 'py-6 px-4 pb-20'
       }`}
       style={{
         ...getContainerBackground(),
         color: theme.textColor,
       }}
     >
-      {/* Top bar for standalone public view (option to return or platform branding) */}
-      {!isPreview && onBackToApp && (
-        <div className="w-full max-w-md mb-4 flex items-center justify-between">
+      {/* Top bar for standalone public view (Always visible for easy Dashboard / Login access) */}
+      {!isPreview && (
+        <div className="w-full max-w-md mb-6 flex items-center justify-between px-1">
           <button
-            onClick={onBackToApp}
-            className="flex items-center gap-1.5 text-xs font-semibold py-1.5 px-3 rounded-full bg-black/10 hover:bg-black/20 backdrop-blur-md transition"
+            type="button"
+            onClick={handleGoToApp}
+            className="flex items-center gap-1.5 text-xs font-bold py-2 px-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-900 text-white shadow-lg border border-slate-700/60 backdrop-blur-md transition-all hover:scale-105 active:scale-95"
+            title="الدخول إلى لوحة التحكم أو تسجيل الدخول"
           >
-            <ArrowRight className="w-4 h-4" />
-            <span>لوحة التحكم</span>
+            <LogIn className="w-3.5 h-3.5 text-emerald-400" />
+            <span>لوحة التحكم / الدخول</span>
           </button>
-          <div className="text-[11px] opacity-75 font-medium">منصة نشرك</div>
+
+          <div className="text-[11px] font-bold opacity-80 bg-black/10 dark:bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
+            منصة نشرك
+          </div>
         </div>
       )}
 
@@ -203,25 +232,38 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
 
         {/* Platform Branding Badge (unless hidden) */}
         {theme.showBranding && (
-          <div className="pt-4 pb-8 text-center">
-            <a
-              href="/"
+          <div className="pt-4 pb-4 text-center">
+            <button
+              onClick={handleGoToApp}
               className="inline-flex items-center gap-1.5 text-[11px] font-medium opacity-60 hover:opacity-100 transition"
             >
               <span>صُنعت بواسطة</span>
               <span className="font-bold underline decoration-dotted">روابط نشرك</span>
-            </a>
+            </button>
           </div>
         )}
       </div>
+
+      {/* Floating Quick Action Button for Instant Dashboard / Login */}
+      {!isPreview && (
+        <button
+          type="button"
+          onClick={handleGoToApp}
+          className="fixed bottom-4 left-4 z-40 flex items-center gap-2 py-2 px-3.5 rounded-full bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold shadow-2xl border border-slate-700/80 backdrop-blur-lg transition-all hover:scale-105 active:scale-95"
+          title="الدخول إلى لوحة التحكم"
+        >
+          <LogIn className="w-3.5 h-3.5 text-emerald-400" />
+          <span>لوحة التحكم</span>
+        </button>
+      )}
 
       {/* QR Code & Share Modal */}
       <QRCodeModal
         isOpen={showQrModal}
         onClose={() => setShowQrModal(false)}
         url={pageUrl}
-        title={user.fullName}
-        userName={user.username}
+        title={currentUser.fullName}
+        userName={currentUser.username}
       />
     </div>
   );

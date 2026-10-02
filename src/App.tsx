@@ -238,7 +238,7 @@ export default function App() {
       <ToastProvider>
         <PublicProfilePage
           user={targetUser}
-          onBackToApp={authState.isAuthenticated ? handleBackToApp : undefined}
+          onBackToApp={handleBackToApp}
         />
       </ToastProvider>
     );

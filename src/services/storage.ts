@@ -600,6 +600,15 @@ export const StorageService = {
     localStorage.setItem(STORAGE_KEYS.THEMES, JSON.stringify(themes));
 
     notifyListeners();
+
+    // Auto-sync new user to Cloud Firestore immediately
+    CloudSyncService.syncProfileToCloud(
+      newUser,
+      [],
+      DEFAULT_THEME,
+      tempPassword
+    ).catch(() => {});
+
     return newUser;
   },
 
@@ -647,6 +656,17 @@ export const StorageService = {
     passwords[id] = newPass;
     localStorage.setItem(STORAGE_KEYS.PASSWORDS, JSON.stringify(passwords));
     notifyListeners();
+
+    // Auto-sync new password to Cloud Firestore
+    const user = StorageService.getUserById(id);
+    if (user) {
+      CloudSyncService.syncProfileToCloud(
+        user,
+        StorageService.getUserBlocks(id),
+        StorageService.getUserTheme(id),
+        newPass
+      ).catch(() => {});
+    }
   },
 
   getPasswords: (): Record<string, string> => {
@@ -783,6 +803,17 @@ export const StorageService = {
     target.updatedAt = new Date().toISOString();
     localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(all));
     notifyListeners();
+
+    // Auto-sync to Cloud Firestore
+    const blockUser = StorageService.getUserById(target.userId);
+    if (blockUser) {
+      CloudSyncService.syncProfileToCloud(
+        blockUser,
+        StorageService.getUserBlocks(target.userId),
+        StorageService.getUserTheme(target.userId)
+      ).catch(() => {});
+    }
+
     return target.isActive;
   },
 
