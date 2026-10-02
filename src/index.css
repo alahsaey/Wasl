@@ -26,3 +26,27 @@
   background: rgba(107, 114, 128, 0.6);
 }
 
+/* Ensure Netlify, Vercel, and third-party hosting badges stay beneath menus and dialogs */
+.netlify-badge,
+[data-netlify-badge],
+#netlify-badge,
+a[href*="netlify.com"] {
+  z-index: 40 !important;
+  opacity: 0.8 !important;
+  transition: opacity 0.2s ease;
+}
+
+.netlify-badge:hover,
+[data-netlify-badge]:hover,
+a[href*="netlify.com"]:hover {
+  opacity: 1 !important;
+}
+
+/* Viewport safe clearance */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+

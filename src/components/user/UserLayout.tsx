@@ -245,6 +245,17 @@ export const UserLayout: React.FC<UserLayoutProps> = ({
               <Fingerprint className="w-4 h-4" />
               <span>الأمان والبصمة</span>
             </button>
+
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onLogout();
+              }}
+              className="w-full flex items-center gap-2.5 p-2.5 rounded-xl font-bold text-xs text-right text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-t border-slate-100 dark:border-slate-800 mt-2 pt-3"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>تسجيل الخروج</span>
+            </button>
           </div>
         )}
       </header>
