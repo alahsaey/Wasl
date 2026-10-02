@@ -7,6 +7,7 @@ import { PublicProfilePage } from './components/preview/PublicProfilePage';
 import { AuthService, AuthState } from './services/auth';
 import { StorageService } from './services/storage';
 import { User } from './types';
+import { decodeProfileFromPayload } from './utils/profilePayload';
 
 export default function App() {
   const [authState, setAuthState] = useState<AuthState>(AuthService.getInitialState());
@@ -14,11 +15,25 @@ export default function App() {
   const [cloudLoadedUser, setCloudLoadedUser] = useState<User | null>(null);
   const [cloudLoading, setCloudLoading] = useState(false);
 
-  // Check initial URL parameters for public page (e.g. ?u=saleh)
+  // Check initial URL parameters for public page (e.g. ?u=saleh or ?p=...)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const userParam = params.get('u');
+      const payloadParam = params.get('p');
+
+      // 1. Direct Instant Payload in URL / QR code (highest priority, 0ms latency)
+      if (payloadParam) {
+        const decoded = decodeProfileFromPayload(payloadParam);
+        if (decoded) {
+          StorageService.saveProfileFromDecoded(decoded);
+          setPublicViewUsername(decoded.user.username.toLowerCase());
+          setCloudLoadedUser(decoded.user);
+          return;
+        }
+      }
+
+      // 2. Standard username parameter
       if (userParam) {
         setPublicViewUsername(userParam.toLowerCase());
       }

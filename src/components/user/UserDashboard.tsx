@@ -18,6 +18,7 @@ import { User, Block, UserThemeConfig } from '../../types';
 import { StorageService } from '../../services/storage';
 import { QRCodeModal } from '../common/QRCodeModal';
 import { useToast } from '../common/Toast';
+import { encodeProfileToPayload } from '../../utils/profilePayload';
 
 interface UserDashboardProps {
   user: User;
@@ -35,9 +36,13 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   const [showQrModal, setShowQrModal] = useState(false);
 
   const blocks = StorageService.getUserBlocks(user.id);
+  const theme = StorageService.getUserTheme(user.id);
   const summary = StorageService.getUserAnalyticsSummary(user.id);
 
-  const publicUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/?u=${user.username}`;
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const publicUrl = `${baseUrl}/?u=${user.username}`;
+  const payloadStr = encodeProfileToPayload(user, blocks, theme);
+  const qrInstantUrl = `${baseUrl}/?u=${user.username}&p=${payloadStr}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(publicUrl);
@@ -246,6 +251,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         isOpen={showQrModal}
         onClose={() => setShowQrModal(false)}
         url={publicUrl}
+        payloadUrl={qrInstantUrl}
         title={user.fullName}
         userName={user.username}
       />

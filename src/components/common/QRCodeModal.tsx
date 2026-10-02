@@ -8,6 +8,7 @@ interface QRCodeModalProps {
   isOpen: boolean;
   onClose: () => void;
   url: string;
+  payloadUrl?: string;
   title: string;
   userName: string;
 }
@@ -16,6 +17,7 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
   isOpen,
   onClose,
   url,
+  payloadUrl,
   title,
   userName,
 }) => {
@@ -24,12 +26,14 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { showToast } = useToast();
 
+  const qrTargetUrl = payloadUrl || url;
+
   useEffect(() => {
-    if (!isOpen || !url) return;
+    if (!isOpen || !qrTargetUrl) return;
 
     // Generate SVG string
     QRCode.toString(
-      url,
+      qrTargetUrl,
       {
         type: 'svg',
         margin: 2,
@@ -50,7 +54,7 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
     if (canvasRef.current) {
       QRCode.toCanvas(
         canvasRef.current,
-        url,
+        qrTargetUrl,
         {
           width: 512,
           margin: 3,
@@ -64,7 +68,7 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
         }
       );
     }
-  }, [isOpen, url]);
+  }, [isOpen, qrTargetUrl]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(url);

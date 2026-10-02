@@ -526,6 +526,54 @@ const initStorage = () => {
     localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(seedAuditLogs));
     localStorage.setItem(STORAGE_KEYS.ANALYTICS, JSON.stringify(seedAnalytics));
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
+    localStorage.setItem('wasl_storage_version', 'v2_live_update');
+  } else {
+    // Migrate existing visitor caches to version 2 (clean old deleted blocks)
+    const STORAGE_VERSION = 'v2_live_update';
+    if (localStorage.getItem('wasl_storage_version') !== STORAGE_VERSION) {
+      const currentBlocksStr = localStorage.getItem(STORAGE_KEYS.BLOCKS);
+      if (currentBlocksStr) {
+        try {
+          let currentBlocks: Block[] = JSON.parse(currentBlocksStr);
+          currentBlocks = currentBlocks.filter((b) => b.userId !== 'user-saleh-2');
+          currentBlocks.push(
+            {
+              id: 'block-saleh-1',
+              userId: 'user-saleh-2',
+              type: 'whatsapp',
+              title: 'محادثة مباشرة عبر واتساب',
+              subtitle: 'تواصل سريع ومباشر بخصوص الاستشارات والمشاريع',
+              phone: '966501234567',
+              message: 'السلام عليكم أ. صالح، وصلت إليك عن طريق صفحتك الرقمية وأرغب بحجز استشارة أعمال.',
+              isActive: true,
+              order: 1,
+              clicksCount: 344,
+              highlight: true,
+              badge: 'متاح للرد السريع',
+              createdAt: '2026-01-16T10:00:00Z',
+              updatedAt: '2026-01-16T10:00:00Z',
+            },
+            {
+              id: 'block-saleh-2',
+              userId: 'user-saleh-2',
+              type: 'link',
+              title: 'بوت المحادثة...',
+              subtitle: 'تواصل وتفاعل فوري عبر تيليجرام',
+              url: 'https://t.me/alahsaeybot',
+              isActive: true,
+              order: 2,
+              clicksCount: 1,
+              createdAt: '2026-01-16T10:10:00Z',
+              updatedAt: '2026-01-16T10:10:00Z',
+            }
+          );
+          localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(currentBlocks));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      localStorage.setItem('wasl_storage_version', STORAGE_VERSION);
+    }
   }
 };
 
@@ -856,6 +904,40 @@ export const StorageService = {
     } catch (e) {
       console.warn('fetchPublicProfileFromCloud error:', e);
       return null;
+    }
+  },
+
+  // Save decoded profile payload directly to local cache & notify listeners
+  saveProfileFromDecoded: (decoded: { user: User; blocks: Block[]; theme?: UserThemeConfig }) => {
+    try {
+      // 1. Save user
+      const users = StorageService.getUsers();
+      const existingIdx = users.findIndex(
+        (u) => u.id === decoded.user.id || u.username.toLowerCase() === decoded.user.username.toLowerCase()
+      );
+      if (existingIdx !== -1) {
+        users[existingIdx] = { ...users[existingIdx], ...decoded.user };
+      } else {
+        users.push(decoded.user);
+      }
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+
+      // 2. Save blocks (overwriting old blocks for this user)
+      let allBlocks = StorageService.getAllBlocks();
+      allBlocks = allBlocks.filter((b) => b.userId !== decoded.user.id);
+      allBlocks.push(...decoded.blocks);
+      localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(allBlocks));
+
+      // 3. Save theme
+      if (decoded.theme) {
+        const themes = StorageService.getAllThemes();
+        themes[decoded.user.id] = decoded.theme;
+        localStorage.setItem(STORAGE_KEYS.THEMES, JSON.stringify(themes));
+      }
+
+      notifyListeners();
+    } catch (e) {
+      console.error('saveProfileFromDecoded error:', e);
     }
   },
 
