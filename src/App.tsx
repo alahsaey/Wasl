@@ -72,6 +72,17 @@ export default function App() {
     return unsub;
   }, []);
 
+  // Live Cloud Firestore sync on app launch / login across all devices (PC & Mobile)
+  useEffect(() => {
+    if (authState.isAuthenticated && authState.user?.username) {
+      StorageService.fetchPublicProfileFromCloud(authState.user.username).then((cloud) => {
+        if (cloud && cloud.user) {
+          AuthService.updateCurrentUserState(cloud.user);
+        }
+      });
+    }
+  }, [authState.isAuthenticated, authState.user?.username]);
+
   // Update SEO Title and Meta dynamically based on route (Req 17)
   useEffect(() => {
     if (publicViewUsername) {

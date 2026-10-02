@@ -526,71 +526,11 @@ const initStorage = () => {
     localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(seedAuditLogs));
     localStorage.setItem(STORAGE_KEYS.ANALYTICS, JSON.stringify(seedAnalytics));
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
-    localStorage.setItem('wasl_storage_version', 'v4_saleh_live_sync');
+    localStorage.setItem('wasl_storage_version', 'v5_preserve_user_data');
   } else {
-    // Migrate existing visitor caches to version 4 (clean old deleted blocks & update avatar)
-    const STORAGE_VERSION = 'v4_saleh_live_sync';
+    // Preserve existing user data and edits across updates
+    const STORAGE_VERSION = 'v5_preserve_user_data';
     if (localStorage.getItem('wasl_storage_version') !== STORAGE_VERSION) {
-      // 1. Migrate Users (Update Saleh's avatar to updated cartoon avatar)
-      const currentUsersStr = localStorage.getItem(STORAGE_KEYS.USERS);
-      if (currentUsersStr) {
-        try {
-          let currentUsers: User[] = JSON.parse(currentUsersStr);
-          const salehIdx = currentUsers.findIndex((u) => u.id === 'user-saleh-2' || u.username === 'saleh');
-          if (salehIdx !== -1) {
-            currentUsers[salehIdx] = {
-              ...currentUsers[salehIdx],
-              avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=saleh_alyassin_sa&backgroundColor=b6e3f4,c0aede,d1d4f9',
-            };
-            localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(currentUsers));
-          }
-        } catch (e) {
-          console.error(e);
-        }
-      }
-
-      // 2. Migrate Blocks
-      const currentBlocksStr = localStorage.getItem(STORAGE_KEYS.BLOCKS);
-      if (currentBlocksStr) {
-        try {
-          let currentBlocks: Block[] = JSON.parse(currentBlocksStr);
-          currentBlocks = currentBlocks.filter((b) => b.userId !== 'user-saleh-2');
-          currentBlocks.push(
-            {
-              id: 'block-saleh-1',
-              userId: 'user-saleh-2',
-              type: 'whatsapp',
-              title: 'واتساب',
-              subtitle: 'واتساب مباشر',
-              phone: '966501234567',
-              message: 'السلام عليكم أ. صالح، وصلت إليك عن طريق صفحتك الرقمية.',
-              isActive: true,
-              order: 1,
-              clicksCount: 344,
-              highlight: true,
-              badge: 'وصل',
-              createdAt: '2026-01-16T10:00:00Z',
-              updatedAt: '2026-01-16T10:00:00Z',
-            },
-            {
-              id: 'block-saleh-2',
-              userId: 'user-saleh-2',
-              type: 'link',
-              title: 'بوت التحدث ا...',
-              subtitle: 'https://t.me/alahsaeybot',
-              url: 'https://t.me/alahsaeybot',
-              isActive: true,
-              order: 2,
-              clicksCount: 1,
-              createdAt: '2026-01-16T10:10:00Z',
-              updatedAt: '2026-01-16T10:10:00Z',
-            }
-          );
-          localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(currentBlocks));
-        } catch (e) {
-          console.error(e);
-        }
-      }
       localStorage.setItem('wasl_storage_version', STORAGE_VERSION);
     }
   }

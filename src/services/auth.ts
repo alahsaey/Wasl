@@ -215,4 +215,13 @@ export const AuthService = {
       listeners.delete(listener);
     };
   },
+
+  updateCurrentUserState: (updatedUser: User) => {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(updatedUser));
+    const current = AuthService.getInitialState();
+    notify({
+      ...current,
+      user: updatedUser,
+    });
+  },
 };
