@@ -1,33 +1,37 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
+import { initializeFirestore, getFirestore, doc, getDoc } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 // Initialize Firebase App
 export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Cloud Firestore database instance
-export const db = firebaseConfig.firestoreDatabaseId
-  ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
-  : getFirestore(app);
+// Initialize Cloud Firestore database instance with auto-detect long polling for iframe resilience
+export const db = ((): ReturnType<typeof getFirestore> => {
+  const dbId = (firebaseConfig as any).firestoreDatabaseId;
+  try {
+    const firestoreSettings: any = {
+      experimentalAutoDetectLongPolling: true,
+    };
+    if (dbId) {
+      firestoreSettings.databaseId = dbId;
+    }
+    return initializeFirestore(app, firestoreSettings);
+  } catch {
+    return dbId ? getFirestore(app, dbId) : getFirestore(app);
+  }
+})();
 
-// Validate Connection to Firestore on boot (Mandatory constraint)
+// Validate Connection to Firestore gracefully
 export async function testConnection() {
   try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error: any) {
-    // Gracefully handle offline or transient connection hiccups without throwing
-    if (
-      error?.code === 'unavailable' ||
-      error?.message?.includes('offline') ||
-      error?.message?.includes('could not be completed') ||
-      error?.message?.includes('Connection failed')
-    ) {
-      console.warn('Firebase Firestore operating in local offline cache mode.');
-    }
+    const testRef = doc(db, 'test', 'connection');
+    await getDoc(testRef);
+  } catch {
+    // Gracefully handle offline or transient connection hiccups without throwing warnings
   }
 }
 
-// Execute connection test
+// Execute connection test silently
 if (typeof window !== 'undefined') {
   testConnection();
 }

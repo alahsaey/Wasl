@@ -9,6 +9,8 @@ import { StorageService } from './services/storage';
 import { CloudSyncService } from './services/cloudSync';
 import { User } from './types';
 import { decodeProfileFromPayload } from './utils/profilePayload';
+import { updateDynamicFaviconAndManifest } from './utils/dynamicManifest';
+import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
 
 export default function App() {
   const [authState, setAuthState] = useState<AuthState>(AuthService.getInitialState());
@@ -16,10 +18,21 @@ export default function App() {
   const [cloudLoadedUser, setCloudLoadedUser] = useState<User | null>(null);
   const [cloudLoading, setCloudLoading] = useState(false);
 
+  // Initialize dynamic favicon, manifest, and icons matching the official brand logo
+  useEffect(() => {
+    updateDynamicFaviconAndManifest();
+    const unsub = StorageService.subscribeToStorage(() => {
+      updateDynamicFaviconAndManifest();
+    });
+    return unsub;
+  }, []);
+
   // Check initial URL parameters for public page (e.g. ?u=saleh or ?p=...) & sync cloud data
   useEffect(() => {
     // Sync all cloud data on boot so changing domains/links preserves 100% of user data
-    StorageService.syncAllFromCloud().catch(() => {});
+    StorageService.syncAllFromCloud().then(() => {
+      updateDynamicFaviconAndManifest();
+    }).catch(() => {});
 
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -202,6 +215,7 @@ export default function App() {
           user={targetUser}
           onBackToApp={handleBackToApp}
         />
+        <PWAInstallPrompt />
       </ToastProvider>
     );
   }
@@ -214,6 +228,7 @@ export default function App() {
           onSuccess={() => {}}
           onViewDemoPage={(username) => handleOpenPublicView(username)}
         />
+        <PWAInstallPrompt />
       </ToastProvider>
     );
   }
@@ -231,6 +246,7 @@ export default function App() {
           }}
           onViewPublicProfile={(username) => handleOpenPublicView(username)}
         />
+        <PWAInstallPrompt />
       </ToastProvider>
     );
   }
@@ -245,6 +261,7 @@ export default function App() {
         onUserUpdated={handleUserUpdated}
         onLogout={() => AuthService.logout()}
       />
+      <PWAInstallPrompt />
     </ToastProvider>
   );
 }
