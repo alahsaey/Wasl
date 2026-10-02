@@ -1,7 +1,8 @@
 import React from 'react';
-import { Palette, Check, Sparkles, Layers, Sliders, Type, Shapes } from 'lucide-react';
+import { Palette, Check, Sparkles, Layers, Sliders, Type, Shapes, Image as ImageIcon } from 'lucide-react';
 import { UserThemeConfig, ThemePresetId, ButtonStyle, ButtonShadow, ImageShape } from '../../types';
 import { THEME_PRESETS } from '../../services/storage';
+import { ImageUploadInput } from '../common/ImageUploadInput';
 
 interface ThemeSelectorProps {
   currentTheme: UserThemeConfig;
@@ -294,6 +295,59 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ currentTheme, onCh
             onChange={(e) => onChange({ showBranding: e.target.checked })}
             className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500"
           />
+        </div>
+      </section>
+
+      {/* 5. Custom Transparent Background Image */}
+      <section className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+        <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
+          <ImageIcon className="w-4 h-4 text-emerald-600" />
+          <span>صورة خلفية مخصصة للفيلم / الصفحة</span>
+        </h4>
+
+        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-2">
+              تحميل صورة خلفية مخصصة (تُعرض صورة واحدة فقط غير مكررة خلف الأزرار)
+            </label>
+            <ImageUploadInput
+              label="صورة خلفية مخصصة"
+              value={currentTheme.backgroundImageUrl || ''}
+              onChange={(url) => onChange({ backgroundImageUrl: url })}
+            />
+          </div>
+
+          {currentTheme.backgroundImageUrl && (
+            <div className="space-y-3 pt-3 border-t border-slate-200/80 dark:border-slate-700">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  درجة شفافية صورة الخلفية (تأثير الشفافية دون المساس بالأزرار)
+                </label>
+                <span className="text-xs font-mono font-bold text-emerald-600">
+                  {Math.round((currentTheme.bgImageOpacity !== undefined ? currentTheme.bgImageOpacity : 0.35) * 100)}%
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0.05"
+                max="1.0"
+                step="0.05"
+                value={currentTheme.bgImageOpacity !== undefined ? currentTheme.bgImageOpacity : 0.35}
+                onChange={(e) => onChange({ bgImageOpacity: parseFloat(e.target.value) })}
+                className="w-full accent-emerald-600 cursor-pointer"
+              />
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                ✨ <strong>مميزات الصورة الحية</strong>: تظهر الصورة مرة واحدة بشكل ثابت وشفاف خلف جميع العناصر، وتتحرك وتتمدد بسلاسة مع التمرير عند إضافة أزرار جديدة دون التأثير على وضوح الأزرار والروابط.
+              </p>
+              <button
+                type="button"
+                onClick={() => onChange({ backgroundImageUrl: '', bgImageOpacity: 0.35 })}
+                className="text-xs text-rose-600 hover:text-rose-700 font-bold transition pt-1 block"
+              >
+                إزالة صورة الخلفية
+              </button>
+            </div>
+          )}
         </div>
       </section>
     </div>

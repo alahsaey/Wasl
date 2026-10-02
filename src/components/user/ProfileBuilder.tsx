@@ -274,7 +274,7 @@ export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({
               <div className="space-y-2.5">
                 {blocks.map((block, index) => (
                   <div
-                    key={block.id}
+                    key={`${block.id}-${index}`}
                     draggable
                     onDragStart={() => handleDragStart(index)}
                     onDragOver={(e) => handleDragOver(e, index)}

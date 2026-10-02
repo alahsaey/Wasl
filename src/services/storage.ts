@@ -230,6 +230,42 @@ export const DEFAULT_SETTINGS: PlatformSettings = {
   supportWhatsApp: '+966500000000',
 };
 
+/**
+ * Smart block merge function to prevent snapshot echoes from deleting locally created blocks
+ */
+export function mergeBlocks(localBlocks: Block[], cloudBlocks: Block[]): Block[] {
+  const map = new Map<string, Block>();
+
+  // 1. Add cloud blocks
+  if (Array.isArray(cloudBlocks)) {
+    cloudBlocks.forEach((b) => {
+      if (b && b.id) {
+        map.set(b.id, b);
+      }
+    });
+  }
+
+  // 2. Merge local blocks (do not drop local blocks if they are newer or not in cloud yet)
+  if (Array.isArray(localBlocks)) {
+    localBlocks.forEach((b) => {
+      if (b && b.id) {
+        const existing = map.get(b.id);
+        if (!existing) {
+          map.set(b.id, b);
+        } else {
+          const localTime = new Date(b.updatedAt || 0).getTime();
+          const cloudTime = new Date(existing.updatedAt || 0).getTime();
+          if (localTime >= cloudTime) {
+            map.set(b.id, b);
+          }
+        }
+      }
+    });
+  }
+
+  return Array.from(map.values()).sort((a, b) => a.order - b.order);
+}
+
 // Storage Keys
 const STORAGE_KEYS = {
   USERS: 'nashrak_users',
@@ -682,16 +718,52 @@ export const StorageService = {
   getAllBlocks: (): Block[] => {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.BLOCKS);
-      return data ? JSON.parse(data) : [];
+      if (!data) return [];
+      const parsed: Block[] = JSON.parse(data);
+      if (!Array.isArray(parsed)) return [];
+
+      const map = new Map<string, Block>();
+      let hadDuplicates = false;
+
+      parsed.forEach((b) => {
+        if (b && b.id) {
+          if (map.has(b.id)) {
+            hadDuplicates = true;
+            const existing = map.get(b.id)!;
+            const bTime = new Date(b.updatedAt || 0).getTime();
+            const exTime = new Date(existing.updatedAt || 0).getTime();
+            if (bTime > exTime) {
+              map.set(b.id, b);
+            }
+          } else {
+            map.set(b.id, b);
+          }
+        }
+      });
+
+      const uniqueBlocks = Array.from(map.values());
+      if (hadDuplicates) {
+        localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(uniqueBlocks));
+      }
+
+      return uniqueBlocks;
     } catch {
       return [];
     }
   },
 
   getUserBlocks: (userId: string): Block[] => {
-    return StorageService.getAllBlocks()
-      .filter((b) => b.userId === userId)
-      .sort((a, b) => a.order - b.order);
+    const userBlocks = StorageService.getAllBlocks().filter((b) => b.userId === userId);
+    const map = new Map<string, Block>();
+    userBlocks.forEach((b) => {
+      if (b && b.id) {
+        const existing = map.get(b.id);
+        if (!existing || new Date(b.updatedAt || 0) >= new Date(existing.updatedAt || 0)) {
+          map.set(b.id, b);
+        }
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => a.order - b.order);
   },
 
   saveBlock: (blockData: Omit<Block, 'id' | 'createdAt' | 'updatedAt' | 'clicksCount'> & { id?: string }): Block => {
@@ -873,44 +945,52 @@ export const StorageService = {
     return await CloudSyncService.syncProfileToCloud(user, blocks, theme, pass);
   },
 
+  saveCloudSnapshot: (data: { user: User; blocks: Block[]; theme?: UserThemeConfig; password?: string }) => {
+    if (!data || !data.user) return;
+
+    // 1. Cache/update user in localStorage
+    const users = StorageService.getUsers();
+    const existingIdx = users.findIndex(
+      (u) => u.id === data.user.id || u.username.toLowerCase() === data.user.username.toLowerCase()
+    );
+    if (existingIdx !== -1) {
+      users[existingIdx] = { ...users[existingIdx], ...data.user };
+    } else {
+      users.push(data.user);
+    }
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+
+    // 2. Smart merge blocks so local newly created blocks are not lost
+    const localUserBlocks = StorageService.getUserBlocks(data.user.id);
+    const mergedBlocks = mergeBlocks(localUserBlocks, data.blocks);
+
+    let allBlocks = StorageService.getAllBlocks().filter((b) => b.userId !== data.user.id);
+    allBlocks.push(...mergedBlocks);
+    localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(allBlocks));
+
+    // 3. Cache/update theme
+    if (data.theme) {
+      const themes = StorageService.getAllThemes();
+      themes[data.user.id] = data.theme;
+      localStorage.setItem(STORAGE_KEYS.THEMES, JSON.stringify(themes));
+    }
+
+    // 4. Cache/update password
+    if (data.password) {
+      const passwords = StorageService.getPasswords();
+      passwords[data.user.id] = data.password;
+      localStorage.setItem(STORAGE_KEYS.PASSWORDS, JSON.stringify(passwords));
+    }
+
+    notifyListeners();
+  },
+
   fetchPublicProfileFromCloud: async (username: string) => {
     try {
       const result = await CloudSyncService.fetchProfileFromCloud(username);
       if (!result) return null;
 
-      // 1. Cache/update user in localStorage
-      const users = StorageService.getUsers();
-      const existingIdx = users.findIndex(
-        (u) => u.id === result.user.id || u.username.toLowerCase() === username.toLowerCase()
-      );
-      if (existingIdx !== -1) {
-        users[existingIdx] = { ...users[existingIdx], ...result.user };
-      } else {
-        users.push(result.user);
-      }
-      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-
-      // 2. Cache/update blocks in localStorage (overwriting previous blocks for this user)
-      let allBlocks = StorageService.getAllBlocks();
-      allBlocks = allBlocks.filter((b) => b.userId !== result.user.id);
-      allBlocks.push(...result.blocks);
-      localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(allBlocks));
-
-      // 3. Cache/update theme
-      if (result.theme) {
-        const themes = StorageService.getAllThemes();
-        themes[result.user.id] = result.theme;
-        localStorage.setItem(STORAGE_KEYS.THEMES, JSON.stringify(themes));
-      }
-
-      // 4. Cache/update password
-      if (result.password) {
-        const passwords = StorageService.getPasswords();
-        passwords[result.user.id] = result.password;
-        localStorage.setItem(STORAGE_KEYS.PASSWORDS, JSON.stringify(passwords));
-      }
-
-      notifyListeners();
+      StorageService.saveCloudSnapshot(result);
       return result;
     } catch (e) {
       console.warn('fetchPublicProfileFromCloud error:', e);

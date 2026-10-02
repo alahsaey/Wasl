@@ -65,27 +65,7 @@ export default function App() {
       const unsubLive = CloudSyncService.subscribeToUserProfile(publicViewUsername, (data) => {
         if (data.user) {
           setCloudLoadedUser(data.user);
-          const users = StorageService.getUsers();
-          const idx = users.findIndex((u) => u.id === data.user.id);
-          if (idx !== -1) users[idx] = data.user;
-          else users.push(data.user);
-          localStorage.setItem('nashrak_users', JSON.stringify(users));
-
-          let allBlocks = StorageService.getAllBlocks().filter((b) => b.userId !== data.user.id);
-          allBlocks.push(...data.blocks);
-          localStorage.setItem('nashrak_blocks', JSON.stringify(allBlocks));
-
-          if (data.theme) {
-            const themes = StorageService.getAllThemes();
-            themes[data.user.id] = data.theme;
-            localStorage.setItem('nashrak_themes', JSON.stringify(themes));
-          }
-
-          if (data.password) {
-            const passwords = StorageService.getPasswords();
-            passwords[data.user.id] = data.password;
-            localStorage.setItem('nashrak_passwords', JSON.stringify(passwords));
-          }
+          StorageService.saveCloudSnapshot(data);
         }
       });
 
@@ -118,28 +98,7 @@ export default function App() {
 
       const unsubUserLive = CloudSyncService.subscribeToUserProfile(username, (data) => {
         if (data.user) {
-          const users = StorageService.getUsers();
-          const idx = users.findIndex((u) => u.id === data.user.id);
-          if (idx !== -1) users[idx] = data.user;
-          else users.push(data.user);
-          localStorage.setItem('nashrak_users', JSON.stringify(users));
-
-          let allBlocks = StorageService.getAllBlocks().filter((b) => b.userId !== data.user.id);
-          allBlocks.push(...data.blocks);
-          localStorage.setItem('nashrak_blocks', JSON.stringify(allBlocks));
-
-          if (data.theme) {
-            const themes = StorageService.getAllThemes();
-            themes[data.user.id] = data.theme;
-            localStorage.setItem('nashrak_themes', JSON.stringify(themes));
-          }
-
-          if (data.password) {
-            const passwords = StorageService.getPasswords();
-            passwords[data.user.id] = data.password;
-            localStorage.setItem('nashrak_passwords', JSON.stringify(passwords));
-          }
-
+          StorageService.saveCloudSnapshot(data);
           AuthService.updateCurrentUserState(data.user);
         }
       });

@@ -134,6 +134,8 @@ export interface UserThemeConfig {
   imageShape: ImageShape;
   showVerifiedBadge: boolean;
   showBranding: boolean;
+  backgroundImageUrl?: string;
+  bgImageOpacity?: number;
 }
 
 export interface AnalyticsEvent {

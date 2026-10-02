@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { QrCode, Share2, CheckCircle2, LogIn, ArrowRight, Home } from 'lucide-react';
 import { User, Block, UserThemeConfig } from '../../types';
-import { StorageService } from '../../services/storage';
+import { StorageService, mergeBlocks } from '../../services/storage';
 import { CloudSyncService } from '../../services/cloudSync';
 import { BlockRenderer } from './BlockRenderer';
 import { QRCodeModal } from '../common/QRCodeModal';
@@ -65,7 +65,7 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
     const unsub = CloudSyncService.subscribeToUserProfile(user.username, (data) => {
       if (data.user) {
         setCurrentUser(data.user);
-        setBlocks(data.blocks);
+        setBlocks((prev) => mergeBlocks(prev, data.blocks));
         if (data.theme) {
           setTheme(data.theme);
         }
@@ -122,7 +122,7 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
 
   return (
     <div
-      className={`min-h-screen w-full transition-colors duration-300 font-cairo flex flex-col items-center ${
+      className={`relative min-h-screen w-full transition-colors duration-300 font-cairo flex flex-col items-center overflow-x-hidden ${
         isPreview ? 'py-6 px-4' : 'py-6 px-4 pb-20'
       }`}
       style={{
@@ -130,9 +130,21 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
         color: theme.textColor,
       }}
     >
+      {/* Custom Background Image Overlay (Single, non-repeating image with transparency) */}
+      {theme.backgroundImageUrl && (
+        <div
+          className="fixed inset-0 pointer-events-none z-0 bg-no-repeat bg-cover bg-center transition-all duration-500"
+          style={{
+            backgroundImage: `url(${theme.backgroundImageUrl})`,
+            opacity: theme.bgImageOpacity !== undefined ? theme.bgImageOpacity : 0.35,
+            backgroundAttachment: 'fixed',
+          }}
+        />
+      )}
+
       {/* Top bar for standalone public view (Always visible for easy Dashboard / Login access) */}
       {!isPreview && (
-        <div className="w-full max-w-md mb-6 flex items-center justify-between px-1">
+        <div className="relative z-10 w-full max-w-md mb-6 flex items-center justify-between px-1">
           <button
             type="button"
             onClick={handleGoToApp}
@@ -150,7 +162,7 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
       )}
 
       {/* Main Content Column (Mobile First) */}
-      <div className="w-full max-w-md flex flex-col items-center space-y-6">
+      <div className="relative z-10 w-full max-w-md flex flex-col items-center space-y-6">
         {/* Profile Header */}
         <div className="flex flex-col items-center text-center space-y-3 pt-2 w-full">
           {/* Avatar with glow/shadow */}
@@ -201,9 +213,9 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
               لم تتم إضافة أي روابط أو عناصر بعد.
             </div>
           ) : (
-            blocks.map((block) => (
+            blocks.map((block, index) => (
               <BlockRenderer
-                key={block.id}
+                key={`${block.id}-${index}`}
                 block={block}
                 theme={theme}
                 isInteractive={!isPreview}
