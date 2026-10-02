@@ -307,10 +307,11 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
                         {user.role !== 'super_admin' && (
                           <button
                             onClick={() => setImpersonateTarget(user)}
-                            className="p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/50 rounded-lg transition"
-                            title="الدخول إلى حساب المستخدم للمساعدة"
+                            className="py-1 px-2.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 rounded-lg text-xs font-bold border border-emerald-200/60 flex items-center gap-1 transition"
+                            title="الدخول إلى لوحة تحكم العضو"
                           >
-                            <LogIn className="w-4 h-4" />
+                            <LogIn className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>دخول اللوحة</span>
                           </button>
                         )}
 
@@ -367,6 +368,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onUserCreated={refreshUsers}
+        onImpersonate={onImpersonate}
       />
 
       {/* Edit Modal */}

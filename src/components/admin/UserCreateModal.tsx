@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { UserPlus, Copy, Check, ShieldCheck, Key } from 'lucide-react';
-import { SubscriptionPlanId, AccountStatus } from '../../types';
+import { UserPlus, Copy, Check, ShieldCheck, Key, LogIn, MessageSquare } from 'lucide-react';
+import { SubscriptionPlanId, AccountStatus, User } from '../../types';
 import { StorageService } from '../../services/storage';
 import { Modal } from '../common/ConfirmDialog';
 import { ImageUploadInput } from '../common/ImageUploadInput';
@@ -10,12 +10,14 @@ interface UserCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUserCreated: () => void;
+  onImpersonate?: (user: User) => void;
 }
 
 export const UserCreateModal: React.FC<UserCreateModalProps> = ({
   isOpen,
   onClose,
   onUserCreated,
+  onImpersonate,
 }) => {
   const { showToast } = useToast();
   const [fullName, setFullName] = useState('');
@@ -29,11 +31,13 @@ export const UserCreateModal: React.FC<UserCreateModalProps> = ({
   const [status, setStatus] = useState<AccountStatus>('active');
 
   // Success state with credentials
+  const [newCreatedUser, setNewCreatedUser] = useState<User | null>(null);
   const [createdCredentials, setCreatedCredentials] = useState<{
     fullName: string;
     username: string;
     email: string;
     pass: string;
+    phone: string;
     pageUrl: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -83,6 +87,7 @@ export const UserCreateModal: React.FC<UserCreateModalProps> = ({
     });
 
     onUserCreated();
+    setNewCreatedUser(newUser);
     showToast('تم إنشاء حساب العضو بنجاح!', 'success');
 
     setCreatedCredentials({
@@ -90,21 +95,35 @@ export const UserCreateModal: React.FC<UserCreateModalProps> = ({
       username: cleanUsername,
       email,
       pass: tempPassword,
+      phone,
       pageUrl: `${window.location.origin}/?u=${cleanUsername}`,
     });
   };
 
   const handleCopyCredentials = () => {
     if (!createdCredentials) return;
-    const text = `مرحباً ${createdCredentials.fullName}،\nتم تجهيز حسابك وصفحتك الرقمية على منصة روابط نشرك المفضلة:\n\n• رابط صفحتك: ${createdCredentials.pageUrl}\n• تسجيل الدخول: ${createdCredentials.email} أو ${createdCredentials.username}\n• كلمة المرور: ${createdCredentials.pass}\n\nيمكنك تسجيل الدخول وإكمال روابطك ومعلوماتك في أي وقت.`;
+    const text = `مرحباً ${createdCredentials.fullName}،\nتم إنشاء وتجهيز حسابك وصفحتك الرقمية على منصة روابط نشرك:\n\n• رابط صفحتك العامة: ${createdCredentials.pageUrl}\n• تسجيل الدخول: ${createdCredentials.email} أو ${createdCredentials.username}\n• كلمة المرور: ${createdCredentials.pass}\n\nيمكنك الآن إكمال روابطك وتخصيص هوية صفحتك.`;
     navigator.clipboard.writeText(text);
     setCopied(true);
-    showToast('تم نسخ بيانات الدخول لإرسالها للعضو', 'success');
+    showToast('تم نسخ بيانات الدخول للذاكرة', 'success');
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleSendWhatsApp = () => {
+    if (!createdCredentials) return;
+    const cleanPhone = createdCredentials.phone.replace(/[^0-9]/g, '');
+    const text = encodeURIComponent(
+      `مرحباً ${createdCredentials.fullName}،\nتم إنشاء وتجهيز حسابك وصفحتك الرقمية على منصة روابط نشرك:\n\n• رابط صفحتك العامة: ${createdCredentials.pageUrl}\n• تسجيل الدخول: ${createdCredentials.email} أو ${createdCredentials.username}\n• كلمة المرور: ${createdCredentials.pass}\n\nيمكنك الآن إكمال روابطك وتخصيص هوية صفحتك.`
+    );
+    const waUrl = cleanPhone
+      ? `https://wa.me/${cleanPhone}?text=${text}`
+      : `https://wa.me/?text=${text}`;
+    window.open(waUrl, '_blank');
   };
 
   const handleClose = () => {
     setCreatedCredentials(null);
+    setNewCreatedUser(null);
     setFullName('');
     setUsername('');
     setEmail('');
@@ -152,22 +171,49 @@ export const UserCreateModal: React.FC<UserCreateModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleCopyCredentials}
-              className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition"
-            >
-              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              <span>{copied ? 'تم نسخ الرسالة الكاملة!' : 'نسخ بيانات الدخول للمستخدم'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleClose}
-              className="py-3 px-5 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition"
-            >
-              إغلاق
-            </button>
+          {/* Action buttons */}
+          <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            {newCreatedUser && onImpersonate && (
+              <button
+                type="button"
+                onClick={() => {
+                  handleClose();
+                  onImpersonate(newCreatedUser);
+                }}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>الدخول المباشر إلى لوحة تحكم العضو الآن 🚀</span>
+              </button>
+            )}
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSendWhatsApp}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-bold text-xs rounded-xl transition"
+              >
+                <MessageSquare className="w-4 h-4 text-emerald-600" />
+                <span>إرسال عبر واتساب</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCopyCredentials}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition"
+              >
+                {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                <span>{copied ? 'تم النسخ!' : 'نسخ البيانات'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleClose}
+                className="py-2.5 px-4 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold text-xs rounded-xl transition"
+              >
+                إغلاق
+              </button>
+            </div>
           </div>
         </div>
       ) : (
