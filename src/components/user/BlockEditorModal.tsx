@@ -14,12 +14,14 @@ import {
   Minus,
   Plus,
   Trash2,
+  Sparkles,
 } from 'lucide-react';
 import { Block, BlockType, SocialPlatform, SocialAccount } from '../../types';
 import { StorageService } from '../../services/storage';
 import { Modal } from '../common/ConfirmDialog';
 import { ImageUploadInput } from '../common/ImageUploadInput';
 import { useToast } from '../common/Toast';
+import { getSocialIcon, getSocialColor } from '../preview/BlockRenderer';
 
 interface BlockEditorModalProps {
   isOpen: boolean;
@@ -30,20 +32,26 @@ interface BlockEditorModalProps {
   onSave: (block: Block) => void;
 }
 
-const SOCIAL_PLATFORMS: { id: SocialPlatform; name: string }[] = [
-  { id: 'instagram', name: 'Instagram' },
-  { id: 'x', name: 'منصة X (تويتر)' },
-  { id: 'tiktok', name: 'TikTok' },
-  { id: 'youtube', name: 'YouTube' },
-  { id: 'linkedin', name: 'LinkedIn' },
-  { id: 'whatsapp', name: 'واتساب' },
-  { id: 'telegram', name: 'تيليجرام' },
-  { id: 'snapchat', name: 'سناب شات' },
-  { id: 'github', name: 'GitHub' },
-  { id: 'behance', name: 'Behance' },
-  { id: 'threads', name: 'Threads' },
-  { id: 'pinterest', name: 'Pinterest' },
-  { id: 'facebook', name: 'Facebook' },
+const SOCIAL_PLATFORMS: { id: SocialPlatform; name: string; defaultPlaceholder: string }[] = [
+  { id: 'snapchat', name: 'سناب شات (Snapchat)', defaultPlaceholder: 'اسم المستخدم في سناب' },
+  { id: 'instagram', name: 'انستقرام (Instagram)', defaultPlaceholder: 'اسم المستخدم في انستقرام' },
+  { id: 'tiktok', name: 'تيك توك (TikTok)', defaultPlaceholder: 'اسم المستخدم في تيك توك' },
+  { id: 'x', name: 'منصة X (تويتر)', defaultPlaceholder: 'اسم المستخدم في X' },
+  { id: 'whatsapp', name: 'واتساب (WhatsApp)', defaultPlaceholder: 'رقم الهاتف مع مفتاح الدولة' },
+  { id: 'telegram', name: 'تيليجرام (Telegram)', defaultPlaceholder: 'اسم المستخدم في تيليجرام' },
+  { id: 'youtube', name: 'يوتيوب (YouTube)', defaultPlaceholder: 'اسم القناة أو رابطها' },
+  { id: 'linkedin', name: 'لينكد إن (LinkedIn)', defaultPlaceholder: 'اسم المعرف في لينكد إن' },
+  { id: 'facebook', name: 'فيسبوك (Facebook)', defaultPlaceholder: 'اسم الحساب أو الرابط' },
+  { id: 'threads', name: 'ثريدز (Threads)', defaultPlaceholder: 'اسم المستخدم في ثريدز' },
+  { id: 'pinterest', name: 'بنترست (Pinterest)', defaultPlaceholder: 'اسم المستخدم في بنترست' },
+  { id: 'behance', name: 'بيهانس (Behance)', defaultPlaceholder: 'اسم المستخدم في بيهانس' },
+  { id: 'github', name: 'جيت هاب (GitHub)', defaultPlaceholder: 'اسم المستخدم في GitHub' },
+  { id: 'discord', name: 'ديسكورد (Discord)', defaultPlaceholder: 'رابط الخادم أو الدعوة' },
+  { id: 'twitch', name: 'تويتش (Twitch)', defaultPlaceholder: 'اسم القناة في تويتش' },
+  { id: 'spotify', name: 'سبوتيفاي (Spotify)', defaultPlaceholder: 'رابط الملف أو قائمة التشغيل' },
+  { id: 'podcast', name: 'بودكاست (Podcast)', defaultPlaceholder: 'رابط البودكاست' },
+  { id: 'kwai', name: 'كواي (Kwai)', defaultPlaceholder: 'اسم المستخدم في كواي' },
+  { id: 'website', name: 'موقع إلكتروني (Website)', defaultPlaceholder: 'https://example.com' },
 ];
 
 export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
@@ -109,8 +117,10 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
       } else if (initialType === 'social_links') {
         setTitle('حسابات التواصل الاجتماعي');
         setSocials([
-          { id: '1', platform: 'x', usernameOrUrl: '', formattedUrl: '', isActive: true },
+          { id: '1', platform: 'snapchat', usernameOrUrl: '', formattedUrl: '', isActive: true },
           { id: '2', platform: 'instagram', usernameOrUrl: '', formattedUrl: '', isActive: true },
+          { id: '3', platform: 'tiktok', usernameOrUrl: '', formattedUrl: '', isActive: true },
+          { id: '4', platform: 'x', usernameOrUrl: '', formattedUrl: '', isActive: true },
         ]);
       } else if (initialType === 'location') {
         setTitle('موقعنا الجغرافي');
@@ -121,13 +131,29 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
     }
   }, [initialBlock, initialType, isOpen]);
 
+  // Quick preset button for direct link
+  const handleSelectSocialPreset = (p: { id: SocialPlatform; name: string }) => {
+    const arabicName = p.name.split(' (')[0];
+    setTitle(arabicName);
+    if (!url) {
+      if (p.id === 'snapchat') setUrl('https://snapchat.com/add/');
+      else if (p.id === 'instagram') setUrl('https://instagram.com/');
+      else if (p.id === 'tiktok') setUrl('https://tiktok.com/@');
+      else if (p.id === 'x') setUrl('https://x.com/');
+      else if (p.id === 'telegram') setUrl('https://t.me/');
+      else if (p.id === 'youtube') setUrl('https://youtube.com/@');
+      else if (p.id === 'linkedin') setUrl('https://linkedin.com/in/');
+      else if (p.id === 'facebook') setUrl('https://facebook.com/');
+    }
+  };
+
   // Handle Social Accounts add/remove/edit
   const handleAddSocial = () => {
     setSocials([
       ...socials,
       {
         id: `soc-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-        platform: 'x',
+        platform: 'snapchat',
         usernameOrUrl: '',
         formattedUrl: '',
         isActive: true,
@@ -151,6 +177,15 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
     setSocials(socials.filter((_, i) => i !== index));
   };
 
+  const normalizeUrl = (input: string) => {
+    if (!input) return '';
+    const trimmed = input.trim();
+    if (!/^https?:\/\//i.test(trimmed) && !trimmed.startsWith('mailto:') && !trimmed.startsWith('tel:')) {
+      return `https://${trimmed}`;
+    }
+    return trimmed;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -159,19 +194,21 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
       return;
     }
 
+    const cleanUrl = normalizeUrl(url);
+
     const saved = StorageService.saveBlock({
       id: initialBlock?.id,
       userId,
       type,
       title: title || (type === 'divider' ? 'فاصل' : 'حسابات التواصل'),
       subtitle,
-      url,
+      url: cleanUrl,
       phone,
       email,
       message,
       content,
       imageUrl,
-      videoUrl,
+      videoUrl: normalizeUrl(videoUrl),
       locationAddress,
       socials,
       highlight,
@@ -181,9 +218,11 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
     });
 
     onSave(saved);
-    showToast(initialBlock ? 'تم تحديث العنصر بنجاح' : 'تمت إضافة العنصر بنجاح', 'success');
+    showToast(initialBlock ? 'تم تحديث العنصر وحفظه سحابياً ☁️' : 'تمت إضافة العنصر ونشره سحابياً ☁️', 'success');
     onClose();
   };
+
+  const detectedPlatform = StorageService.detectSocialPlatform(title, url);
 
   return (
     <Modal
@@ -203,11 +242,11 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-1 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900/50">
               {[
                 { type: 'link' as BlockType, label: 'رابط مباشر', icon: LinkIcon },
-                { type: 'whatsapp' as BlockType, label: 'واتساب', icon: MessageCircle },
-                { type: 'social_links' as BlockType, label: 'سوشيال ميديا', icon: Share2 },
-                { type: 'pdf' as BlockType, label: 'ملف PDF', icon: FileText },
+                { type: 'social_links' as BlockType, label: 'شريط تواصل اجتماعي', icon: Share2 },
+                { type: 'whatsapp' as BlockType, label: 'واتساب مباشر', icon: MessageCircle },
+                { type: 'contact_card' as BlockType, label: 'بطاقة اتصال vCard', icon: UserCheck },
                 { type: 'location' as BlockType, label: 'موقع جغرافي', icon: MapPin },
-                { type: 'contact_card' as BlockType, label: 'بطاقة اتصال', icon: UserCheck },
+                { type: 'pdf' as BlockType, label: 'ملف PDF', icon: FileText },
                 { type: 'heading' as BlockType, label: 'عنوان فرعي', icon: Type },
                 { type: 'text' as BlockType, label: 'نص / اقتباس', icon: Type },
                 { type: 'video' as BlockType, label: 'فيديو يوتيوب', icon: Video },
@@ -225,7 +264,7 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
                     onClick={() => setType(item.type)}
                     className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition ${
                       isSelected
-                        ? 'border-emerald-600 bg-white dark:bg-slate-800 text-emerald-600 font-bold shadow-sm'
+                        ? 'border-emerald-600 bg-white dark:bg-slate-800 text-emerald-600 font-bold shadow-sm ring-1 ring-emerald-500/20'
                         : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-slate-800/60'
                     }`}
                   >
@@ -247,11 +286,49 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
           </div>
         ) : (
           <>
+            {/* Quick Social Presets when adding direct link */}
+            {type === 'link' && !initialBlock && (
+              <div className="space-y-1.5 p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
+                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>قوالب سريعة لمنصات التواصل (اضغط للتعبئة التلقائية):</span>
+                </span>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {SOCIAL_PLATFORMS.slice(0, 8).map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => handleSelectSocialPreset(p)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:text-emerald-600 transition shadow-2xs"
+                    >
+                      <span className="w-3.5 h-3.5 flex items-center justify-center text-slate-700 dark:text-slate-300">
+                        {getSocialIcon(p.id)}
+                      </span>
+                      <span>{p.name.split(' (')[0]}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Title */}
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                {type === 'heading' ? 'نص العنوان الرئيسي' : 'عنوان الزر / العنصر'}
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  {type === 'heading' ? 'نص العنوان الرئيسي' : 'عنوان الزر / العنصر'}
+                </label>
+                {detectedPlatform && (
+                  <span
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-xs"
+                    style={{ backgroundColor: getSocialColor(detectedPlatform) }}
+                  >
+                    <span className="w-3 h-3 flex items-center justify-center">
+                      {getSocialIcon(detectedPlatform)}
+                    </span>
+                    <span>تم التعرف على أيقونة المنصة تلقائياً</span>
+                  </span>
+                )}
+              </div>
               <input
                 type="text"
                 required
@@ -259,7 +336,7 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={
                   type === 'link'
-                    ? 'مثال: موقعي الإلكتروني، حجز موعد...'
+                    ? 'مثال: سناب، انستقرام، موقعي، حجز استشارة...'
                     : type === 'whatsapp'
                     ? 'مثال: محادثة مباشرة عبر واتساب'
                     : 'اكتب عنواناً جذاباً...'
@@ -290,25 +367,28 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
         {(type === 'link' || type === 'website') && (
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              الرابط (URL)
+              الرابط أو اسم المستخدم (URL)
             </label>
             <input
-              type="url"
+              type="text"
               required
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://example.com"
+              placeholder="مثال: https://snapchat.com/add/username أو snapchat.com/..."
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-mono dir-ltr text-left focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none"
             />
+            <p className="text-[11px] text-slate-500">
+              يمكنك كتابة الرابط مع https:// أو بدونها، وسيتم ضبط الرابط تلقائياً.
+            </p>
           </div>
         )}
 
-        {/* 3. WhatsApp Fields (Req 7) */}
+        {/* 3. WhatsApp Fields */}
         {type === 'whatsapp' && (
           <div className="space-y-3 p-3.5 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-900/50 rounded-xl">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-emerald-900 dark:text-emerald-200">
-                رقم الواتساب مع مفتاح الدولة (بدون + أو أصفار إضافية)
+                رقم الواتساب مع مفتاح الدولة (مثال: 966500000000)
               </label>
               <input
                 type="text"
@@ -334,63 +414,75 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
           </div>
         )}
 
-        {/* 4. Social Accounts Block (Req 6) */}
+        {/* 4. Social Accounts Block */}
         {type === 'social_links' && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                الحسابات الاجتماعية المضافة
+                أيقونات التواصل الاجتماعي المضافة ({socials.length})
               </label>
               <button
                 type="button"
                 onClick={handleAddSocial}
-                className="flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700"
+                className="flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg transition"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>إضافة حساب</span>
+                <span>إضافة أيقونة منصة</span>
               </button>
             </div>
 
-            <div className="space-y-2 max-h-56 overflow-y-auto">
-              {socials.map((soc, idx) => (
-                <div
-                  key={soc.id || idx}
-                  className="flex items-center gap-2 p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40"
-                >
-                  <select
-                    value={soc.platform}
-                    onChange={(e) =>
-                      handleUpdateSocial(idx, 'platform', e.target.value as SocialPlatform)
-                    }
-                    className="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium"
+            <div className="space-y-2 max-h-64 overflow-y-auto p-1">
+              {socials.map((soc, idx) => {
+                const currentPlatformConfig =
+                  SOCIAL_PLATFORMS.find((p) => p.id === soc.platform) || SOCIAL_PLATFORMS[0];
+                return (
+                  <div
+                    key={soc.id || idx}
+                    className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40"
                   >
-                    {SOCIAL_PLATFORMS.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-white shadow-2xs"
+                      style={{ backgroundColor: getSocialColor(soc.platform) }}
+                    >
+                      {getSocialIcon(soc.platform)}
+                    </div>
 
-                  <input
-                    type="text"
-                    value={soc.usernameOrUrl}
-                    onChange={(e) => handleUpdateSocial(idx, 'usernameOrUrl', e.target.value)}
-                    placeholder="اسم المستخدم أو الرابط"
-                    className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono dir-ltr text-left outline-none"
-                  />
+                    <select
+                      value={soc.platform}
+                      onChange={(e) =>
+                        handleUpdateSocial(idx, 'platform', e.target.value as SocialPlatform)
+                      }
+                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold"
+                    >
+                      {SOCIAL_PLATFORMS.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
 
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveSocial(idx)}
-                    className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
+                    <input
+                      type="text"
+                      value={soc.usernameOrUrl}
+                      onChange={(e) => handleUpdateSocial(idx, 'usernameOrUrl', e.target.value)}
+                      placeholder={currentPlatformConfig.defaultPlaceholder}
+                      className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono dir-ltr text-left outline-none"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSocial(idx)}
+                      className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition"
+                      title="حذف الأيقونة"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
             <p className="text-[11px] text-slate-500">
-              يدعم النظام المعرفات مباشرة مثل @username أو روابط الحسابات الكاملة.
+              يمكنك إدخال اسم المستخدم مباشرة مثل @saleh أو رابط الحساب الكامل، وسيتم توليد الرابط الصحيح فوراً.
             </p>
           </div>
         )}
@@ -434,7 +526,7 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
               رابط ملف PDF التعريفي
             </label>
             <input
-              type="url"
+              type="text"
               required
               value={url}
               onChange={(e) => setUrl(e.target.value)}
@@ -464,7 +556,7 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
                 رابط خرائط جوجل (Google Maps URL - اختياري)
               </label>
               <input
-                type="url"
+                type="text"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://maps.google.com/?q=..."
@@ -481,7 +573,7 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
               رابط الفيديو (YouTube أو Vimeo)
             </label>
             <input
-              type="url"
+              type="text"
               required
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
@@ -563,7 +655,7 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
             type="submit"
             className="px-5 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition"
           >
-            {initialBlock ? 'حفظ التعديلات' : 'إضافة العنصر'}
+            {initialBlock ? 'حفظ التعديلات' : 'إضافة العنصر ونشره'}
           </button>
         </div>
       </form>

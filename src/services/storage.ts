@@ -766,6 +766,84 @@ export const StorageService = {
     return Array.from(map.values()).sort((a, b) => a.order - b.order);
   },
 
+  formatSocialUrl: (platform: SocialPlatform, usernameOrUrl: string): string => {
+    if (!usernameOrUrl) return '';
+    const clean = usernameOrUrl.trim();
+    if (clean.startsWith('http://') || clean.startsWith('https://')) {
+      return clean;
+    }
+    const user = clean.replace(/^@/, '');
+    switch (platform) {
+      case 'x':
+        return `https://x.com/${user}`;
+      case 'snapchat':
+        return `https://snapchat.com/add/${user}`;
+      case 'instagram':
+        return `https://instagram.com/${user}`;
+      case 'tiktok':
+        return `https://tiktok.com/@${user}`;
+      case 'youtube':
+        return user.startsWith('UC') || user.startsWith('channel/')
+          ? `https://youtube.com/${user}`
+          : `https://youtube.com/@${user}`;
+      case 'whatsapp':
+        return `https://wa.me/${user.replace(/[^0-9]/g, '')}`;
+      case 'telegram':
+        return `https://t.me/${user}`;
+      case 'linkedin':
+        return `https://linkedin.com/in/${user}`;
+      case 'facebook':
+        return `https://facebook.com/${user}`;
+      case 'threads':
+        return `https://threads.net/@${user}`;
+      case 'pinterest':
+        return `https://pinterest.com/${user}`;
+      case 'github':
+        return `https://github.com/${user}`;
+      case 'behance':
+        return `https://behance.net/${user}`;
+      case 'discord':
+        return user.startsWith('discord.gg/') ? `https://${user}` : `https://discord.gg/${user}`;
+      case 'twitch':
+        return `https://twitch.tv/${user}`;
+      case 'spotify':
+        return `https://open.spotify.com/user/${user}`;
+      case 'podcast':
+        return `https://podcasts.apple.com/${user}`;
+      case 'kwai':
+        return `https://kwai-video.com/u/@${user}`;
+      case 'website':
+      default:
+        return `https://${user}`;
+    }
+  },
+
+  detectSocialPlatform: (title: string, url: string): SocialPlatform | null => {
+    const t = (title || '').toLowerCase();
+    const u = (url || '').toLowerCase();
+
+    if (t.includes('سناب') || t.includes('snapchat') || u.includes('snapchat.com')) return 'snapchat';
+    if (t.includes('واتساب') || t.includes('واتس') || t.includes('whatsapp') || u.includes('wa.me') || u.includes('whatsapp.com')) return 'whatsapp';
+    if (t.includes('تويتر') || t.includes('منصة x') || t.includes('x.com') || t.includes('twitter') || u.includes('twitter.com') || u.includes('x.com')) return 'x';
+    if (t.includes('انستقرام') || t.includes('انستا') || t.includes('instagram') || u.includes('instagram.com')) return 'instagram';
+    if (t.includes('تيك توك') || t.includes('تيكتوك') || t.includes('tiktok') || u.includes('tiktok.com')) return 'tiktok';
+    if (t.includes('يوتيوب') || t.includes('youtube') || u.includes('youtube.com') || u.includes('youtu.be')) return 'youtube';
+    if (t.includes('تيليجرام') || t.includes('تلغرام') || t.includes('telegram') || u.includes('t.me') || u.includes('telegram.me')) return 'telegram';
+    if (t.includes('لينكد') || t.includes('linkedin') || u.includes('linkedin.com')) return 'linkedin';
+    if (t.includes('فيسبوك') || t.includes('facebook') || u.includes('facebook.com') || u.includes('fb.com')) return 'facebook';
+    if (t.includes('ثريدز') || t.includes('threads') || u.includes('threads.net')) return 'threads';
+    if (t.includes('بنترست') || t.includes('pinterest') || u.includes('pinterest.com')) return 'pinterest';
+    if (t.includes('بيهانس') || t.includes('behance') || u.includes('behance.net')) return 'behance';
+    if (t.includes('جيت') || t.includes('github') || u.includes('github.com')) return 'github';
+    if (t.includes('ديسكورد') || t.includes('discord') || u.includes('discord.gg')) return 'discord';
+    if (t.includes('تويتش') || t.includes('twitch') || u.includes('twitch.tv')) return 'twitch';
+    if (t.includes('سبوتيفاي') || t.includes('spotify') || u.includes('spotify.com')) return 'spotify';
+    if (t.includes('بودكاست') || t.includes('podcast') || u.includes('podcasts.apple.com')) return 'podcast';
+    if (t.includes('كواي') || t.includes('kwai') || u.includes('kwai.com')) return 'kwai';
+
+    return null;
+  },
+
   saveBlock: (blockData: Omit<Block, 'id' | 'createdAt' | 'updatedAt' | 'clicksCount'> & { id?: string }): Block => {
     const all = StorageService.getAllBlocks();
     const now = new Date().toISOString();
@@ -795,9 +873,12 @@ export const StorageService = {
         notifyListeners();
       }
     } else {
+      const userBlocks = all.filter((b) => b.userId === blockData.userId);
+      const maxOrder = userBlocks.length > 0 ? Math.max(...userBlocks.map((b) => b.order || 0)) : 0;
       saved = {
         ...blockData,
         id: `block-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        order: blockData.order !== undefined && blockData.order !== 99 ? blockData.order : maxOrder + 1,
         clicksCount: 0,
         createdAt: now,
         updatedAt: now,
@@ -1218,45 +1299,6 @@ export const StorageService = {
     Object.values(STORAGE_KEYS).forEach((k) => localStorage.removeItem(k));
     initStorage();
     notifyListeners();
-  },
-
-  // Helpers for Social Media URL Formatting (Req 6)
-  formatSocialUrl: (platform: SocialPlatform, usernameOrUrl: string): string => {
-    const val = usernameOrUrl.trim();
-    if (val.startsWith('http://') || val.startsWith('https://')) {
-      return val;
-    }
-    const cleanUser = val.replace(/^@/, '');
-    switch (platform) {
-      case 'instagram':
-        return `https://instagram.com/${cleanUser}`;
-      case 'tiktok':
-        return `https://tiktok.com/@${cleanUser}`;
-      case 'youtube':
-        return cleanUser.startsWith('@') ? `https://youtube.com/${cleanUser}` : `https://youtube.com/@${cleanUser}`;
-      case 'x':
-        return `https://x.com/${cleanUser}`;
-      case 'facebook':
-        return `https://facebook.com/${cleanUser}`;
-      case 'linkedin':
-        return `https://linkedin.com/in/${cleanUser}`;
-      case 'snapchat':
-        return `https://snapchat.com/add/${cleanUser}`;
-      case 'telegram':
-        return `https://t.me/${cleanUser}`;
-      case 'whatsapp':
-        return `https://wa.me/${cleanUser.replace(/[^0-9]/g, '')}`;
-      case 'pinterest':
-        return `https://pinterest.com/${cleanUser}`;
-      case 'threads':
-        return `https://threads.net/@${cleanUser}`;
-      case 'github':
-        return `https://github.com/${cleanUser}`;
-      case 'behance':
-        return `https://behance.net/${cleanUser}`;
-      default:
-        return `https://${cleanUser}`;
-    }
   },
 
   // Helper for WhatsApp click URL (Req 7)

@@ -246,6 +246,77 @@ export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({
               </div>
             </div>
 
+            {/* Quick One-Click Social Launchers */}
+            <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">إضافة سريعة:</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingBlock(null);
+                  setNewBlockType('link');
+                  setIsEditorOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold bg-[#FFFC00]/15 text-amber-900 dark:text-amber-300 border border-amber-300/40 hover:bg-[#FFFC00]/30 transition"
+              >
+                <span>👻 سناب شات</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingBlock(null);
+                  setNewBlockType('whatsapp');
+                  setIsEditorOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition"
+              >
+                <span>💬 واتساب</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingBlock(null);
+                  setNewBlockType('link');
+                  setIsEditorOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold bg-pink-500/15 text-pink-800 dark:text-pink-300 border border-pink-500/30 hover:bg-pink-500/25 transition"
+              >
+                <span>📸 انستقرام</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingBlock(null);
+                  setNewBlockType('link');
+                  setIsEditorOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold bg-slate-900/10 text-slate-900 dark:text-slate-200 border border-slate-400/30 hover:bg-slate-900/20 transition"
+              >
+                <span>🎵 تيك توك</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingBlock(null);
+                  setNewBlockType('link');
+                  setIsEditorOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold bg-slate-900/10 text-slate-900 dark:text-slate-200 border border-slate-400/30 hover:bg-slate-900/20 transition"
+              >
+                <span>𝕏 منصة X</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingBlock(null);
+                  setNewBlockType('social_links');
+                  setIsEditorOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold bg-indigo-500/15 text-indigo-800 dark:text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/25 transition"
+              >
+                <span>🌐 شريط أيقونات شامل</span>
+              </button>
+            </div>
+
             {/* Blocks List */}
             {blocks.length === 0 ? (
               <div className="text-center py-12 px-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 space-y-3">

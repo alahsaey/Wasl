@@ -83,19 +83,25 @@ export interface Block {
 }
 
 export type SocialPlatform =
+  | 'x'
+  | 'snapchat'
   | 'instagram'
   | 'tiktok'
   | 'youtube'
-  | 'x'
-  | 'facebook'
-  | 'linkedin'
-  | 'snapchat'
-  | 'telegram'
   | 'whatsapp'
-  | 'pinterest'
+  | 'telegram'
+  | 'linkedin'
+  | 'facebook'
   | 'threads'
+  | 'pinterest'
   | 'github'
-  | 'behance';
+  | 'behance'
+  | 'discord'
+  | 'twitch'
+  | 'spotify'
+  | 'podcast'
+  | 'kwai'
+  | 'website';
 
 export interface SocialAccount {
   id: string;

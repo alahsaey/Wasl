@@ -1,26 +1,20 @@
 import {
+  collection,
   doc,
   setDoc,
   getDoc,
-  collection,
+  getDocs,
   query,
   where,
-  getDocs,
   onSnapshot,
   Unsubscribe,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { User, Block, UserThemeConfig } from '../types';
 
-/**
- * CloudSyncService:
- * Realtime persistence via Cloud Firestore with onSnapshot listeners
- * ensuring that any changes made on ANY device (PC or Phone)
- * reflect INSTANTLY in milliseconds on all other connected devices and public views.
- */
 export const CloudSyncService = {
   /**
-   * Push a user's profile, credentials, blocks, and theme to Firestore
+   * Sync complete user profile, blocks, theme, and password to Cloud Firestore
    */
   syncProfileToCloud: async (
     user: User,
@@ -66,21 +60,41 @@ export const CloudSyncService = {
         );
       }
 
-      // 4. Save user blocks list (overwriting deleted blocks completely)
+      // 4. Save user blocks list (including all properties and socials)
       await setDoc(doc(db, 'blocks', user.id), {
         userId: user.id,
         blocks: blocks.map((b) => ({
           id: b.id,
+          userId: b.userId || user.id,
           title: b.title || '',
           subtitle: b.subtitle || '',
-          type: b.type,
+          type: b.type || 'link',
           url: b.url || '',
           phone: b.phone || '',
+          email: b.email || '',
           message: b.message || '',
+          content: b.content || '',
           imageUrl: b.imageUrl || '',
-          order: b.order,
-          isActive: b.isActive,
-          clicksCount: b.clicksCount || 0,
+          videoUrl: b.videoUrl || '',
+          fileUrl: b.fileUrl || '',
+          fileName: b.fileName || '',
+          locationAddress: b.locationAddress || '',
+          socials: Array.isArray(b.socials)
+            ? b.socials.map((s) => ({
+                id: s.id,
+                platform: s.platform,
+                usernameOrUrl: s.usernameOrUrl || '',
+                formattedUrl: s.formattedUrl || '',
+                isActive: s.isActive !== false,
+              }))
+            : [],
+          highlight: Boolean(b.highlight),
+          badge: b.badge || '',
+          order: typeof b.order === 'number' ? b.order : 0,
+          isActive: b.isActive !== false,
+          clicksCount: typeof b.clicksCount === 'number' ? b.clicksCount : 0,
+          createdAt: b.createdAt || new Date().toISOString(),
+          updatedAt: b.updatedAt || new Date().toISOString(),
         })),
         updatedAt: new Date().toISOString(),
       });
@@ -203,11 +217,12 @@ export const CloudSyncService = {
     let currentUserId: string | null = null;
     let currentUserData: User | null = null;
     let currentBlocksData: Block[] = [];
+    let hasLoadedBlocks = false;
     let currentThemeData: UserThemeConfig | undefined = undefined;
     let currentPasswordData: string | undefined = undefined;
 
     const notifyIfReady = () => {
-      if (currentUserData) {
+      if (currentUserData && hasLoadedBlocks) {
         onData({
           user: currentUserData,
           blocks: currentBlocksData,
@@ -240,13 +255,18 @@ export const CloudSyncService = {
 
           // 2. Blocks doc live listener
           unsubBlocks = onSnapshot(doc(db, 'blocks', targetId), (blocksSnap) => {
+            hasLoadedBlocks = true;
             if (blocksSnap.exists()) {
               const bData = blocksSnap.data();
               if (Array.isArray(bData?.blocks)) {
                 currentBlocksData = bData.blocks;
-                notifyIfReady();
+              } else {
+                currentBlocksData = [];
               }
+            } else {
+              currentBlocksData = [];
             }
+            notifyIfReady();
           });
 
           // 3. Theme doc live listener
