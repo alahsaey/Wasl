@@ -8,12 +8,12 @@ export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getA
 // Initialize Cloud Firestore database instance with auto-detect long polling for iframe resilience
 export const db = ((): ReturnType<typeof getFirestore> => {
   const dbId = (firebaseConfig as any).firestoreDatabaseId;
+  const firestoreSettings = {
+    experimentalAutoDetectLongPolling: true,
+  };
   try {
-    const firestoreSettings: any = {
-      experimentalAutoDetectLongPolling: true,
-    };
     if (dbId) {
-      firestoreSettings.databaseId = dbId;
+      return initializeFirestore(app, firestoreSettings, dbId);
     }
     return initializeFirestore(app, firestoreSettings);
   } catch {

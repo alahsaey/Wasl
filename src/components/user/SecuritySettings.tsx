@@ -5,6 +5,7 @@ import { BiometricService, BiometricRegistration } from '../../services/biometri
 import { StorageService } from '../../services/storage';
 import { BiometricSetupModal } from '../common/BiometricModal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
+import { DarkModeToggle } from '../common/DarkModeToggle';
 import { useToast } from '../common/Toast';
 
 interface SecuritySettingsProps {
@@ -92,12 +93,15 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ user }) => {
       {/* Header */}
       <div>
         <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-          الأمان ومطابقة البصمة الحيوية
+          إعدادات الحساب والأمان والمظهر
         </h2>
         <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          إدارة حماية الحساب، تفعيل الدخول بالبصمة (Fingerprint / TouchID / FaceID)، وتغيير كلمة المرور
+          تخصيص الوضع المظلم (Dark Mode)، تفعيل الدخول بالبصمة الحيوية، وتغيير كلمة المرور
         </p>
       </div>
+
+      {/* 0. Dark Mode Switch Card */}
+      <DarkModeToggle variant="card" />
 
       {/* 1. Biometrics Section */}
       <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-6">

@@ -54,7 +54,9 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
     StorageService.fetchPublicProfileFromCloud(user.username).then((cloud) => {
       if (cloud) {
         setCurrentUser(cloud.user);
-        setBlocks(cloud.blocks);
+        if (Array.isArray(cloud.blocks)) {
+          setBlocks(cloud.blocks);
+        }
         if (cloud.theme) {
           setTheme(cloud.theme);
         }
@@ -62,18 +64,34 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
     });
 
     // 2. Real-time live listener (onSnapshot)
-    const unsub = CloudSyncService.subscribeToUserProfile(user.username, (data) => {
+    const unsubCloud = CloudSyncService.subscribeToUserProfile(user.username, (data) => {
       if (data.user) {
         setCurrentUser(data.user);
-        setBlocks((prev) => mergeBlocks(prev, data.blocks));
+        if (Array.isArray(data.blocks)) {
+          setBlocks(data.blocks);
+        }
         if (data.theme) {
           setTheme(data.theme);
         }
       }
     });
 
+    // 3. Local storage change listener
+    const unsubStorage = StorageService.subscribeToStorage(() => {
+      if (!propBlocks) {
+        const localBlocks = StorageService.getUserBlocks(user.id);
+        if (localBlocks && localBlocks.length > 0) {
+          setBlocks(localBlocks);
+        }
+      }
+      if (!propTheme) {
+        setTheme(StorageService.getUserTheme(user.id));
+      }
+    });
+
     return () => {
-      unsub();
+      unsubCloud();
+      unsubStorage();
     };
   }, [user.username, isPreview]);
 

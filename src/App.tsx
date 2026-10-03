@@ -10,16 +10,20 @@ import { CloudSyncService } from './services/cloudSync';
 import { User } from './types';
 import { decodeProfileFromPayload } from './utils/profilePayload';
 import { updateDynamicFaviconAndManifest } from './utils/dynamicManifest';
+import { initDarkMode } from './utils/darkMode';
 import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
 
 export default function App() {
   const [authState, setAuthState] = useState<AuthState>(AuthService.getInitialState());
   const [publicViewUsername, setPublicViewUsername] = useState<string | null>(null);
   const [cloudLoadedUser, setCloudLoadedUser] = useState<User | null>(null);
+  const [cloudLoadedBlocks, setCloudLoadedBlocks] = useState<any[] | null>(null);
+  const [cloudLoadedTheme, setCloudLoadedTheme] = useState<any | null>(null);
   const [cloudLoading, setCloudLoading] = useState(false);
 
-  // Initialize dynamic favicon, manifest, and icons matching the official brand logo
+  // Initialize dark mode, dynamic favicon, manifest, and icons matching the official brand logo
   useEffect(() => {
+    initDarkMode();
     updateDynamicFaviconAndManifest();
     const unsub = StorageService.subscribeToStorage(() => {
       updateDynamicFaviconAndManifest();
@@ -46,6 +50,12 @@ export default function App() {
           StorageService.saveProfileFromDecoded(decoded);
           setPublicViewUsername(decoded.user.username.toLowerCase());
           setCloudLoadedUser(decoded.user);
+          if (Array.isArray(decoded.blocks)) {
+            setCloudLoadedBlocks(decoded.blocks);
+          }
+          if (decoded.theme) {
+            setCloudLoadedTheme(decoded.theme);
+          }
           return;
         }
       }
@@ -63,6 +73,11 @@ export default function App() {
       const local = StorageService.getUserByUsername(publicViewUsername);
       if (local) {
         setCloudLoadedUser(local);
+        const localBlocks = StorageService.getUserBlocks(local.id);
+        if (localBlocks && localBlocks.length > 0) {
+          setCloudLoadedBlocks(localBlocks);
+        }
+        setCloudLoadedTheme(StorageService.getUserTheme(local.id));
       } else {
         setCloudLoading(true);
       }
@@ -71,6 +86,12 @@ export default function App() {
         .then((cloud) => {
           if (cloud) {
             setCloudLoadedUser(cloud.user);
+            if (Array.isArray(cloud.blocks)) {
+              setCloudLoadedBlocks(cloud.blocks);
+            }
+            if (cloud.theme) {
+              setCloudLoadedTheme(cloud.theme);
+            }
           }
         })
         .finally(() => {
@@ -81,6 +102,12 @@ export default function App() {
       const unsubLive = CloudSyncService.subscribeToUserProfile(publicViewUsername, (data) => {
         if (data.user) {
           setCloudLoadedUser(data.user);
+          if (Array.isArray(data.blocks)) {
+            setCloudLoadedBlocks(data.blocks);
+          }
+          if (data.theme) {
+            setCloudLoadedTheme(data.theme);
+          }
           StorageService.saveCloudSnapshot(data);
         }
       });
@@ -90,6 +117,8 @@ export default function App() {
       };
     } else {
       setCloudLoadedUser(null);
+      setCloudLoadedBlocks(null);
+      setCloudLoadedTheme(null);
     }
   }, [publicViewUsername]);
 
@@ -213,6 +242,8 @@ export default function App() {
       <ToastProvider>
         <PublicProfilePage
           user={targetUser}
+          blocks={cloudLoadedBlocks || StorageService.getUserBlocks(targetUser.id)}
+          theme={cloudLoadedTheme || StorageService.getUserTheme(targetUser.id)}
           onBackToApp={handleBackToApp}
         />
         <PWAInstallPrompt />

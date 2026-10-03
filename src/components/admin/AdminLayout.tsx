@@ -26,6 +26,7 @@ import { SettingsView } from './SettingsView';
 import { UserCreateModal } from './UserCreateModal';
 import { useToast } from '../common/Toast';
 import { BrandLogo } from '../common/BrandLogo';
+import { DarkModeToggle } from '../common/DarkModeToggle';
 
 export type AdminTab =
   | 'dashboard'
@@ -104,6 +105,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
         {/* User Card & Logout Button */}
         <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+          {/* Dark Mode Switch */}
+          <DarkModeToggle variant="switch" showLabel={true} />
+
           <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
             <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 shrink-0">
               <img

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { BiometricSetupModal } from '../common/BiometricModal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
+import { DarkModeToggle } from '../common/DarkModeToggle';
 
 export const SettingsView: React.FC = () => {
   const { showToast } = useToast();
@@ -111,12 +112,15 @@ export const SettingsView: React.FC = () => {
     <div className="max-w-3xl space-y-6 text-right font-cairo">
       <div>
         <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-          إعدادات النظام والمنصة
+          إعدادات النظام والمنصة والمظهر
         </h2>
         <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          التحكم بهوية المنصة، سياسة الأمان والدخول بالبصمة، والدعم الفني
+          التحكم بهوية المنصة، الوضع المظلم (Dark Mode)، سياسة الأمان، والبصمة الحيوية
         </p>
       </div>
+
+      {/* Dark Mode Preference Card */}
+      <DarkModeToggle variant="card" />
 
       {/* Biometrics Card for Admin Account */}
       {currentUser && (

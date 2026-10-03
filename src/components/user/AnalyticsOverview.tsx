@@ -15,6 +15,7 @@ import {
   Flame,
 } from 'lucide-react';
 import { StorageService } from '../../services/storage';
+import { DailyGrowthChart } from './DailyGrowthChart';
 
 interface AnalyticsOverviewProps {
   userId: string;
@@ -137,6 +138,12 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ userId }) 
           </div>
         </div>
       </div>
+
+      {/* Daily Growth Line Chart (30-Day Trend) */}
+      <DailyGrowthChart
+        userId={userId}
+        onRefresh={() => setRefreshKey((prev) => prev + 1)}
+      />
 
       {/* User Links Performance Section (Ranked by Highest Clicks First) */}
       <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">

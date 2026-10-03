@@ -72,12 +72,19 @@ export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({
 
   useEffect(() => {
     loadData();
-    // Auto-sync current profile to cloud on mount so public link/QR is always up to date
-    StorageService.syncUserToCloud(user.id).catch(() => {});
+    // Ensure we fetch the latest profile and blocks from Cloud Firestore on mount
+    StorageService.fetchPublicProfileFromCloud(user.username).then((cloud) => {
+      if (cloud && Array.isArray(cloud.blocks) && cloud.blocks.length > 0) {
+        StorageService.saveCloudSnapshot(cloud);
+        loadData();
+      } else {
+        StorageService.syncUserToCloud(user.id).catch(() => {});
+      }
+    });
 
     const unsub = StorageService.subscribeToStorage(loadData);
     return unsub;
-  }, [user.id]);
+  }, [user.id, user.username]);
 
   const handleManualCloudSync = async () => {
     setSyncing(true);

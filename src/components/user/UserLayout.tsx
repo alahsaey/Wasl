@@ -23,6 +23,7 @@ import { SecuritySettings } from './SecuritySettings';
 import { StorageService } from '../../services/storage';
 import { useToast } from '../common/Toast';
 import { BrandLogo } from '../common/BrandLogo';
+import { DarkModeToggle } from '../common/DarkModeToggle';
 
 interface UserLayoutProps {
   user: User;
@@ -142,6 +143,9 @@ export const UserLayout: React.FC<UserLayoutProps> = ({
 
           {/* Left Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Quick Dark Mode Toggle */}
+            <DarkModeToggle variant="button" />
+
             <button
               onClick={onOpenPublicView}
               className="flex items-center gap-1.5 py-2 px-3 sm:px-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 transition"

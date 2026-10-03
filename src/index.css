@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark, .dark *), :is(.dark, .dark *) &);
+
 @theme {
   --font-cairo: 'Cairo', 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
   --font-ibm: 'IBM Plex Sans Arabic', 'Cairo', system-ui, sans-serif;
@@ -8,6 +10,24 @@
 :root {
   direction: rtl;
   font-family: var(--font-cairo);
+  color-scheme: light;
+}
+
+html.dark,
+:root.dark,
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+html.dark body,
+[data-theme="dark"] body {
+  background-color: #020617;
+  color: #f8fafc;
+}
+
+/* Seamless theme transitions */
+body, header, aside, main {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease;
 }
 
 /* Custom modern scrollbar */
