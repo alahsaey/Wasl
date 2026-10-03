@@ -38,6 +38,45 @@ export default function App() {
       updateDynamicFaviconAndManifest();
     }).catch(() => {});
 
+    // Realtime listener for ALL users across all browsers and devices
+    const unsubAllUsers = CloudSyncService.subscribeToAllUsers((users) => {
+      localStorage.setItem('wasl_users', JSON.stringify(users));
+      StorageService.notify();
+    });
+
+    // Realtime listener for ALL blocks
+    const unsubAllBlocks = CloudSyncService.subscribeToAllBlocks((blocksMap) => {
+      const allBlocks: any[] = [];
+      Object.values(blocksMap).forEach((list) => {
+        if (Array.isArray(list)) allBlocks.push(...list);
+      });
+      localStorage.setItem('wasl_blocks', JSON.stringify(allBlocks));
+      StorageService.notify();
+    });
+
+    // Realtime listener for ALL themes
+    const unsubAllThemes = CloudSyncService.subscribeToAllThemes((themesMap) => {
+      localStorage.setItem('wasl_themes', JSON.stringify(themesMap));
+      StorageService.notify();
+    });
+
+    // Realtime listener for ALL passwords
+    const unsubAllPasswords = CloudSyncService.subscribeToAllPasswords((passwordsMap) => {
+      localStorage.setItem('wasl_passwords', JSON.stringify(passwordsMap));
+      StorageService.notify();
+    });
+
+    // Realtime listener for System Config (settings & plans)
+    const unsubSystem = CloudSyncService.subscribeToSystemConfig((config) => {
+      if (config.settings) {
+        localStorage.setItem('wasl_settings', JSON.stringify(config.settings));
+      }
+      if (config.plans) {
+        localStorage.setItem('wasl_plans', JSON.stringify(config.plans));
+      }
+      StorageService.notify();
+    });
+
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const userParam = params.get('u');
@@ -56,15 +95,20 @@ export default function App() {
           if (decoded.theme) {
             setCloudLoadedTheme(decoded.theme);
           }
-          return;
         }
-      }
-
-      // 2. Standard username parameter
-      if (userParam) {
+      } else if (userParam) {
+        // 2. Standard username parameter
         setPublicViewUsername(userParam.toLowerCase());
       }
     }
+
+    return () => {
+      unsubAllUsers();
+      unsubAllBlocks();
+      unsubAllThemes();
+      unsubAllPasswords();
+      unsubSystem();
+    };
   }, []);
 
   // Sync public user from Cloud Firestore when requested (QR scan / public URL)
