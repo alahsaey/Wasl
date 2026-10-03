@@ -1380,6 +1380,8 @@ export const StorageService = {
         passwords: StorageService.getPasswords(),
         blocks: StorageService.getAllBlocks(),
         themes: JSON.parse(localStorage.getItem(STORAGE_KEYS.THEMES) || '{}'),
+        analytics: StorageService.getAnalytics(),
+        auditLogs: StorageService.getAuditLogs(),
         settings: StorageService.getSettings(),
         plans: StorageService.getPlans(),
       };
@@ -1401,8 +1403,19 @@ export const StorageService = {
       if (data.passwords) localStorage.setItem(STORAGE_KEYS.PASSWORDS, JSON.stringify(data.passwords));
       if (data.blocks) localStorage.setItem(STORAGE_KEYS.BLOCKS, JSON.stringify(data.blocks));
       if (data.themes) localStorage.setItem(STORAGE_KEYS.THEMES, JSON.stringify(data.themes));
+      if (data.analytics) localStorage.setItem(STORAGE_KEYS.ANALYTICS, JSON.stringify(data.analytics));
+      if (data.auditLogs) localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(data.auditLogs));
       if (data.settings) localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(data.settings));
       if (data.plans) localStorage.setItem(STORAGE_KEYS.PLANS, JSON.stringify(data.plans));
+
+      // Trigger cloud sync for all imported users
+      if (Array.isArray(data.users)) {
+        data.users.forEach((u: User) => {
+          if (u && u.id) {
+            StorageService.syncUserToCloud(u.id).catch(() => {});
+          }
+        });
+      }
 
       notifyListeners();
       return true;

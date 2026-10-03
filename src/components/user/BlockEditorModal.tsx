@@ -249,40 +249,90 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
         {/* Type Selector (only on create) */}
         {!initialBlock && (
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              نوع العنصر
-            </label>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-1 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900/50">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                نوع العنصر
+              </label>
+              <span className="text-[10px] text-slate-400 font-medium">
+                اختر نوع المحتوى أو المنصة لإضافتها مباشرة
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-56 overflow-y-auto p-1.5 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/80 dark:bg-slate-900/80 custom-scrollbar">
               {[
-                { type: 'link' as BlockType, label: 'رابط مباشر', icon: LinkIcon },
-                { type: 'social_links' as BlockType, label: 'شريط تواصل اجتماعي', icon: Share2 },
-                { type: 'whatsapp' as BlockType, label: 'واتساب مباشر', icon: MessageCircle },
-                { type: 'contact_card' as BlockType, label: 'بطاقة اتصال vCard', icon: UserCheck },
-                { type: 'location' as BlockType, label: 'موقع جغرافي', icon: MapPin },
-                { type: 'pdf' as BlockType, label: 'ملف PDF', icon: FileText },
-                { type: 'heading' as BlockType, label: 'عنوان فرعي', icon: Type },
-                { type: 'text' as BlockType, label: 'نص / اقتباس', icon: Type },
-                { type: 'video' as BlockType, label: 'فيديو يوتيوب', icon: Video },
-                { type: 'image' as BlockType, label: 'صورة', icon: ImageIcon },
-                { type: 'phone' as BlockType, label: 'اتصال هاتف', icon: Phone },
-                { type: 'email' as BlockType, label: 'بريد إلكتروني', icon: Mail },
-                { type: 'divider' as BlockType, label: 'فاصل مرئي', icon: Minus },
+                { id: 'link', label: 'رابط مباشر', icon: <LinkIcon className="w-5 h-5 text-emerald-600" />, blockType: 'link' as BlockType },
+                { id: 'snapchat', label: 'سناب شات', icon: getSocialIcon('snapchat'), blockType: 'link' as BlockType, socialPlatform: 'snapchat' as SocialPlatform },
+                { id: 'whatsapp', label: 'واتساب مباشر', icon: getSocialIcon('whatsapp'), blockType: 'whatsapp' as BlockType },
+                { id: 'instagram', label: 'انستقرام', icon: getSocialIcon('instagram'), blockType: 'link' as BlockType, socialPlatform: 'instagram' as SocialPlatform },
+                { id: 'tiktok', label: 'تيك توك', icon: getSocialIcon('tiktok'), blockType: 'link' as BlockType, socialPlatform: 'tiktok' as SocialPlatform },
+                { id: 'x', label: 'منصة X', icon: getSocialIcon('x'), blockType: 'link' as BlockType, socialPlatform: 'x' as SocialPlatform },
+                { id: 'telegram', label: 'تيليجرام', icon: getSocialIcon('telegram'), blockType: 'link' as BlockType, socialPlatform: 'telegram' as SocialPlatform },
+                { id: 'youtube', label: 'يوتيوب', icon: getSocialIcon('youtube'), blockType: 'link' as BlockType, socialPlatform: 'youtube' as SocialPlatform },
+                { id: 'linkedin', label: 'لينكد إن', icon: getSocialIcon('linkedin'), blockType: 'link' as BlockType, socialPlatform: 'linkedin' as SocialPlatform },
+                { id: 'facebook', label: 'فيسبوك', icon: getSocialIcon('facebook'), blockType: 'link' as BlockType, socialPlatform: 'facebook' as SocialPlatform },
+                { id: 'social_links', label: 'شريط تواصل', icon: <Share2 className="w-5 h-5 text-indigo-500" />, blockType: 'social_links' as BlockType },
+                { id: 'contact_card', label: 'بطاقة vCard', icon: <UserCheck className="w-5 h-5 text-blue-500" />, blockType: 'contact_card' as BlockType },
+                { id: 'location', label: 'موقع جغرافي', icon: <MapPin className="w-5 h-5 text-rose-500" />, blockType: 'location' as BlockType },
+                { id: 'pdf', label: 'ملف PDF', icon: <FileText className="w-5 h-5 text-amber-500" />, blockType: 'pdf' as BlockType },
+                { id: 'heading', label: 'عنوان فرعي', icon: <Type className="w-5 h-5 text-purple-500" />, blockType: 'heading' as BlockType },
+                { id: 'text', label: 'نص / اقتباس', icon: <Type className="w-5 h-5 text-slate-500" />, blockType: 'text' as BlockType },
+                { id: 'video', label: 'فيديو يوتيوب', icon: <Video className="w-5 h-5 text-red-500" />, blockType: 'video' as BlockType },
+                { id: 'image', label: 'صورة', icon: <ImageIcon className="w-5 h-5 text-teal-500" />, blockType: 'image' as BlockType },
+                { id: 'phone', label: 'اتصال هاتف', icon: <Phone className="w-5 h-5 text-emerald-500" />, blockType: 'phone' as BlockType },
+                { id: 'email', label: 'بريد إلكتروني', icon: <Mail className="w-5 h-5 text-sky-500" />, blockType: 'email' as BlockType },
+                { id: 'divider', label: 'فاصل مرئي', icon: <Minus className="w-5 h-5 text-slate-400" />, blockType: 'divider' as BlockType },
               ].map((item) => {
-                const Icon = item.icon;
-                const isSelected = type === item.type;
+                const isSelected =
+                  item.socialPlatform
+                    ? type === 'link' && (title === item.label || url.includes(item.id))
+                    : type === item.blockType && (!title || !['سناب شات', 'انستقرام', 'تيك توك', 'منصة X', 'تيليجرام', 'يوتيوب', 'لينكد إن', 'فيسبوك'].includes(title));
+
                 return (
                   <button
-                    key={item.type}
+                    key={item.id}
                     type="button"
-                    onClick={() => setType(item.type)}
-                    className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition ${
+                    onClick={() => {
+                      setType(item.blockType);
+                      if (item.socialPlatform) {
+                        setTitle(item.label);
+                        if (item.id === 'snapchat') setUrl('https://snapchat.com/add/');
+                        else if (item.id === 'instagram') setUrl('https://instagram.com/');
+                        else if (item.id === 'tiktok') setUrl('https://tiktok.com/@');
+                        else if (item.id === 'x') setUrl('https://x.com/');
+                        else if (item.id === 'telegram') setUrl('https://t.me/');
+                        else if (item.id === 'youtube') setUrl('https://youtube.com/@');
+                        else if (item.id === 'linkedin') setUrl('https://linkedin.com/in/');
+                        else if (item.id === 'facebook') setUrl('https://facebook.com/');
+                      } else if (item.blockType === 'whatsapp') {
+                        setTitle('تواصل عبر واتساب');
+                        setMessage('السلام عليكم، تواصلت معك عبر صفحتك الرقمية.');
+                      } else if (item.blockType === 'location') {
+                        setTitle('موقعنا الجغرافي');
+                      } else if (item.blockType === 'contact_card') {
+                        setTitle('بطاقة الاتصال السريعة');
+                        setSubtitle('اضغط لحفظ جهة الاتصال في هاتفك');
+                      } else if (item.blockType === 'social_links' && socials.length === 0) {
+                        setTitle('حسابات التواصل الاجتماعي');
+                        setSocials([
+                          { id: '1', platform: 'snapchat', usernameOrUrl: '', formattedUrl: '', isActive: true },
+                          { id: '2', platform: 'instagram', usernameOrUrl: '', formattedUrl: '', isActive: true },
+                          { id: '3', platform: 'tiktok', usernameOrUrl: '', formattedUrl: '', isActive: true },
+                          { id: '4', platform: 'x', usernameOrUrl: '', formattedUrl: '', isActive: true },
+                        ]);
+                      }
+                    }}
+                    className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all duration-200 ${
                       isSelected
-                        ? 'border-emerald-600 bg-white dark:bg-slate-800 text-emerald-600 font-bold shadow-sm ring-1 ring-emerald-500/20'
-                        : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-slate-800/60'
+                        ? 'border-emerald-600 bg-white dark:bg-slate-800 text-emerald-600 font-extrabold shadow-sm ring-2 ring-emerald-500/20 scale-[1.02]'
+                        : 'border-slate-200/60 dark:border-slate-800/80 bg-white/70 dark:bg-slate-800/40 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:border-slate-300'
                     }`}
                   >
-                    <Icon className="w-4 h-4 mb-1" />
-                    <span className="text-[11px] leading-tight">{item.label}</span>
+                    <div className="w-6 h-6 mb-1.5 flex items-center justify-center shrink-0">
+                      {item.icon}
+                    </div>
+                    <span className="text-[11px] leading-tight font-bold truncate max-w-full">
+                      {item.label}
+                    </span>
                   </button>
                 );
               })}
@@ -299,30 +349,6 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
           </div>
         ) : (
           <>
-            {/* Quick Social Presets when adding direct link */}
-            {type === 'link' && !initialBlock && (
-              <div className="space-y-1.5 p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
-                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  <span>قوالب سريعة لمنصات التواصل (اضغط للتعبئة التلقائية):</span>
-                </span>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {SOCIAL_PLATFORMS.slice(0, 8).map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => handleSelectSocialPreset(p)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:text-emerald-600 transition shadow-2xs"
-                    >
-                      <span className="w-3.5 h-3.5 flex items-center justify-center text-slate-700 dark:text-slate-300">
-                        {getSocialIcon(p.id)}
-                      </span>
-                      <span>{p.name.split(' (')[0]}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Title */}
             <div className="space-y-1">

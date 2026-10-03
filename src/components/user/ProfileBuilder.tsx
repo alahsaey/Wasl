@@ -25,6 +25,7 @@ import { ThemeSelector } from './ThemeSelector';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { ImageUploadInput } from '../common/ImageUploadInput';
 import { useToast } from '../common/Toast';
+import { getSocialIcon } from '../preview/BlockRenderer';
 
 interface ProfileBuilderProps {
   user: User;
@@ -272,7 +273,8 @@ export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({
                 }}
                 className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold bg-[#FFFC00]/15 text-amber-900 dark:text-amber-300 border border-amber-300/40 hover:bg-[#FFFC00]/30 transition"
               >
-                <span>👻 سناب شات</span>
+                <span className="w-4 h-4 flex items-center justify-center text-amber-600">{getSocialIcon('snapchat')}</span>
+                <span>سناب شات</span>
               </button>
               <button
                 type="button"
@@ -283,7 +285,20 @@ export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({
                 }}
                 className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition"
               >
-                <span>💬 واتساب</span>
+                <span className="w-4 h-4 flex items-center justify-center text-emerald-600">{getSocialIcon('whatsapp')}</span>
+                <span>واتساب</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingBlock(null);
+                  setNewBlockType('link');
+                  setIsEditorOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold bg-sky-500/15 text-sky-800 dark:text-sky-300 border border-sky-500/30 hover:bg-sky-500/25 transition"
+              >
+                <span className="w-4 h-4 flex items-center justify-center text-sky-600">{getSocialIcon('telegram')}</span>
+                <span>تيليجرام</span>
               </button>
               <button
                 type="button"
@@ -294,7 +309,8 @@ export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({
                 }}
                 className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold bg-pink-500/15 text-pink-800 dark:text-pink-300 border border-pink-500/30 hover:bg-pink-500/25 transition"
               >
-                <span>📸 انستقرام</span>
+                <span className="w-4 h-4 flex items-center justify-center text-pink-600">{getSocialIcon('instagram')}</span>
+                <span>انستقرام</span>
               </button>
               <button
                 type="button"
@@ -305,7 +321,8 @@ export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({
                 }}
                 className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold bg-slate-900/10 text-slate-900 dark:text-slate-200 border border-slate-400/30 hover:bg-slate-900/20 transition"
               >
-                <span>🎵 تيك توك</span>
+                <span className="w-4 h-4 flex items-center justify-center text-slate-900 dark:text-slate-100">{getSocialIcon('tiktok')}</span>
+                <span>تيك توك</span>
               </button>
               <button
                 type="button"
@@ -316,7 +333,8 @@ export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({
                 }}
                 className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold bg-slate-900/10 text-slate-900 dark:text-slate-200 border border-slate-400/30 hover:bg-slate-900/20 transition"
               >
-                <span>𝕏 منصة X</span>
+                <span className="w-4 h-4 flex items-center justify-center text-slate-900 dark:text-slate-100">{getSocialIcon('x')}</span>
+                <span>منصة X</span>
               </button>
               <button
                 type="button"
@@ -327,7 +345,8 @@ export const ProfileBuilder: React.FC<ProfileBuilderProps> = ({
                 }}
                 className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-bold bg-indigo-500/15 text-indigo-800 dark:text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/25 transition"
               >
-                <span>🌐 شريط أيقونات شامل</span>
+                <span className="w-4 h-4 flex items-center justify-center text-indigo-600">🌐</span>
+                <span>شريط أيقونات شامل</span>
               </button>
             </div>
 
