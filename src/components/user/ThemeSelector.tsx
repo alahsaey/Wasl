@@ -1,5 +1,5 @@
 import React from 'react';
-import { Palette, Check, Sparkles, Layers, Sliders, Type, Shapes, Image as ImageIcon } from 'lucide-react';
+import { Palette, Check, Sparkles, Layers, Sliders, Type, Shapes, Image as ImageIcon, LayoutList } from 'lucide-react';
 import { UserThemeConfig, ThemePresetId, ButtonStyle, ButtonShadow, ImageShape } from '../../types';
 import { THEME_PRESETS } from '../../services/storage';
 import { ImageUploadInput } from '../common/ImageUploadInput';
@@ -148,12 +148,52 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ currentTheme, onCh
         </div>
       </section>
 
-      {/* 3. Button Styles & Shadows */}
+      {/* 3. Button Styles & Layout Grid Mode */}
       <section className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
         <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
           <Sliders className="w-4 h-4 text-emerald-600" />
-          <span>أنماط الأزرار والبطاقات</span>
+          <span>تخطيط وعرض أزرار التواصل والروابط</span>
         </h4>
+
+        {/* Layout Mode Selection (Grid 2-Columns vs List 1-Column) */}
+        <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
+          <label className="text-xs font-bold text-slate-900 dark:text-slate-100 block">
+            طريقة عرض الأزرار والروابط في صفحتك
+          </label>
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onClick={() => onChange({ layoutMode: 'grid' })}
+              className={`p-3 rounded-xl border text-right transition flex flex-col items-center justify-center gap-1.5 ${
+                (currentTheme.layoutMode || 'grid') === 'grid'
+                  ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-bold dark:bg-emerald-950 dark:text-emerald-200 ring-2 ring-emerald-500/20'
+                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300'
+              }`}
+            >
+              <div className="flex items-center gap-1.5 text-xs">
+                <LayoutList className="w-4 h-4 text-emerald-600" />
+                <span>شبكة (زرّين في الصف)</span>
+              </div>
+              <span className="text-[10px] opacity-75 text-center">أيقونة بالمنتصف بالأعلى والاسم تحتها مباشرة</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onChange({ layoutMode: 'list' })}
+              className={`p-3 rounded-xl border text-right transition flex flex-col items-center justify-center gap-1.5 ${
+                currentTheme.layoutMode === 'list'
+                  ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-bold dark:bg-emerald-950 dark:text-emerald-200 ring-2 ring-emerald-500/20'
+                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300'
+              }`}
+            >
+              <div className="flex items-center gap-1.5 text-xs">
+                <Sliders className="w-4 h-4 text-emerald-600" />
+                <span>قائمة (زر واحد بالصف)</span>
+              </div>
+              <span className="text-[10px] opacity-75 text-center">أزرار عريضة ممتدة بعرض الصفحة</span>
+            </button>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Button Style */}

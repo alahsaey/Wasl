@@ -120,6 +120,93 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
       ? `${window.location.origin}/?u=${currentUser.username}`
       : `https://wasl-sa.netlify.app/?u=${currentUser.username}`;
 
+  const isGridMode = (theme.layoutMode || 'grid') === 'grid';
+
+  // Helper to render blocks with grid grouping
+  const renderBlocksList = () => {
+    if (blocks.length === 0) {
+      return (
+        <div className="text-center py-10 opacity-60 text-xs">
+          لم تتم إضافة أي روابط أو عناصر بعد.
+        </div>
+      );
+    }
+
+    if (!isGridMode) {
+      // List Mode: standard full-width stack
+      return (
+        <div className="w-full space-y-3.5">
+          {blocks.map((block, index) => (
+            <BlockRenderer
+              key={`${block.id}-${index}`}
+              block={block}
+              theme={theme}
+              isInteractive={!isPreview}
+              isGridMode={false}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    // Grid Mode: Group contiguous grid-compatible blocks into 2-column grid
+    const isGridType = (type: string) =>
+      ['link', 'whatsapp', 'phone', 'email', 'website', 'pdf', 'location', 'contact_card', 'video'].includes(type);
+
+    const activeBlocks = blocks.filter((b) => b.isActive);
+    const groups: { type: 'grid' | 'full'; items: typeof blocks }[] = [];
+
+    let currentGridGroup: typeof blocks = [];
+
+    activeBlocks.forEach((b) => {
+      if (isGridType(b.type)) {
+        currentGridGroup.push(b);
+      } else {
+        if (currentGridGroup.length > 0) {
+          groups.push({ type: 'grid', items: [...currentGridGroup] });
+          currentGridGroup = [];
+        }
+        groups.push({ type: 'full', items: [b] });
+      }
+    });
+
+    if (currentGridGroup.length > 0) {
+      groups.push({ type: 'grid', items: [...currentGridGroup] });
+    }
+
+    return (
+      <div className="w-full space-y-3.5">
+        {groups.map((group, groupIdx) => {
+          if (group.type === 'full') {
+            return group.items.map((b, bIdx) => (
+              <BlockRenderer
+                key={`${b.id}-${groupIdx}-${bIdx}`}
+                block={b}
+                theme={theme}
+                isInteractive={!isPreview}
+                isGridMode={false}
+              />
+            ));
+          }
+
+          return (
+            <div key={`grid-group-${groupIdx}`} className="grid grid-cols-2 gap-3 sm:gap-3.5 w-full">
+              {group.items.map((b, bIdx) => (
+                <BlockRenderer
+                  key={`${b.id}-${groupIdx}-${bIdx}`}
+                  block={b}
+                  theme={theme}
+                  isInteractive={!isPreview}
+                  isGridMode={true}
+                />
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div
       className={`relative min-h-screen w-full transition-colors duration-300 font-cairo flex flex-col items-center overflow-x-hidden ${
@@ -206,23 +293,8 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
           )}
         </div>
 
-        {/* Dynamic Blocks List */}
-        <div className="w-full space-y-3.5">
-          {blocks.length === 0 ? (
-            <div className="text-center py-10 opacity-60 text-xs">
-              لم تتم إضافة أي روابط أو عناصر بعد.
-            </div>
-          ) : (
-            blocks.map((block, index) => (
-              <BlockRenderer
-                key={`${block.id}-${index}`}
-                block={block}
-                theme={theme}
-                isInteractive={!isPreview}
-              />
-            ))
-          )}
-        </div>
+        {/* Dynamic Blocks List (Grid 2-Columns Layout default or List) */}
+        {renderBlocksList()}
 
         {/* Footer Actions: QR & Share */}
         <div className="pt-6 w-full flex items-center justify-center gap-3">

@@ -142,6 +142,7 @@ export interface UserThemeConfig {
   showBranding: boolean;
   backgroundImageUrl?: string;
   bgImageOpacity?: number;
+  layoutMode?: 'grid' | 'list'; // 'grid' (2 items per row, icon top, text bottom) | 'list' (1 item per row)
 }
 
 export interface AnalyticsEvent {
