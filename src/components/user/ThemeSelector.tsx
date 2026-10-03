@@ -466,6 +466,37 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ currentTheme, onCh
           )}
         </div>
       </section>
+
+      {/* 6. Live Animated Background Effects */}
+      <section className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+        <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-amber-500" />
+          <span>تأثيرات الخلفية التفاعلية الحية (Live Background Effects)</span>
+        </h4>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          {[
+            { id: 'none', label: 'بدون تأثير', desc: 'خلفية هادئة' },
+            { id: 'stars', label: 'نجوم مضيئة 🌌', desc: 'وهج النجوم' },
+            { id: 'particles', label: 'جزيئات حركية ✨', desc: 'إضاءات عائمة' },
+            { id: 'glow', label: 'توهج ألوان 🔮', desc: 'موجات ألوان حية' },
+          ].map((eff) => (
+            <button
+              key={eff.id}
+              type="button"
+              onClick={() => onChange({ bgEffect: eff.id as any })}
+              className={`p-3 rounded-2xl border text-center transition flex flex-col items-center justify-center gap-1 ${
+                (currentTheme.bgEffect || 'none') === eff.id
+                  ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-bold dark:bg-emerald-950 dark:text-emerald-200 ring-2 ring-emerald-500/20'
+                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300'
+              }`}
+            >
+              <span className="text-xs font-bold">{eff.label}</span>
+              <span className="text-[10px] opacity-75">{eff.desc}</span>
+            </button>
+          ))}
+        </div>
+      </section>
     </div>
   );
 };

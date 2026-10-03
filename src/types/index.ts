@@ -52,7 +52,9 @@ export type BlockType =
   | 'divider'
   | 'heading'
   | 'location'
-  | 'contact_card';
+  | 'contact_card'
+  | 'countdown'
+  | 'contact_form';
 
 export interface Block {
   id: string;
@@ -75,6 +77,7 @@ export interface Block {
   fileUrl?: string; // For pdf
   fileName?: string;
   locationAddress?: string;
+  targetDate?: string; // For countdown timer block
   socials?: SocialAccount[];
   highlight?: boolean;
   badge?: string;
@@ -145,6 +148,7 @@ export interface UserThemeConfig {
   backgroundImageUrl?: string;
   bgImageOpacity?: number;
   layoutMode?: LayoutTemplateId; // 'classic' (old 1-col list) | 'innovative' (new 2-col grid) | 'modern' (creative 2-col glass pill grid)
+  bgEffect?: 'none' | 'stars' | 'particles' | 'glow'; // Dynamic live background effects
 }
 
 export interface AnalyticsEvent {

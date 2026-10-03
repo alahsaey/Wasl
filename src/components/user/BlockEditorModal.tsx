@@ -74,6 +74,7 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
   const [imageUrl, setImageUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
   const [locationAddress, setLocationAddress] = useState('');
+  const [targetDate, setTargetDate] = useState('');
   const [highlight, setHighlight] = useState(false);
   const [badge, setBadge] = useState('');
   const [socials, setSocials] = useState<SocialAccount[]>([]);
@@ -91,6 +92,7 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
       setImageUrl(initialBlock.imageUrl || '');
       setVideoUrl(initialBlock.videoUrl || '');
       setLocationAddress(initialBlock.locationAddress || '');
+      setTargetDate(initialBlock.targetDate || '');
       setHighlight(initialBlock.highlight || false);
       setBadge(initialBlock.badge || '');
       setSocials(initialBlock.socials || []);
@@ -106,6 +108,7 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
       setImageUrl('');
       setVideoUrl('');
       setLocationAddress('');
+      setTargetDate('');
       setHighlight(false);
       setBadge('');
       setSocials([]);
@@ -114,6 +117,15 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
       if (initialType === 'whatsapp') {
         setTitle('تواصل عبر واتساب');
         setMessage('السلام عليكم، وصلت إليكم عن طريق صفحتكم وأرغب في الاستفسار.');
+      } else if (initialType === 'countdown') {
+        setTitle('العد التنازلي لإطلاق الفعالية/المنتج');
+        setSubtitle('سارع بالتسجيل والاستفادة قبل انتهاء الوقت!');
+        // Default target date: 3 days in future
+        const inThreeDays = new Date(Date.now() + 86400000 * 3).toISOString().slice(0, 16);
+        setTargetDate(inThreeDays);
+      } else if (initialType === 'contact_form') {
+        setTitle('أرسل لي رسالة مباشرة');
+        setSubtitle('يسعدني استقبال رسائلك واستفساراتك في أي وقت');
       } else if (initialType === 'social_links') {
         setTitle('حسابات التواصل الاجتماعي');
         setSocials([
@@ -210,6 +222,7 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
       imageUrl,
       videoUrl: normalizeUrl(videoUrl),
       locationAddress,
+      targetDate,
       socials,
       highlight,
       badge,
@@ -411,6 +424,25 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
                 className="w-full px-3.5 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none resize-none"
               />
             </div>
+          </div>
+        )}
+
+        {/* Countdown specific field */}
+        {type === 'countdown' && (
+          <div className="space-y-1 p-3.5 bg-slate-900 text-white rounded-xl border border-emerald-500/30">
+            <label className="text-xs font-bold text-emerald-400 block">
+              تاريخ ووقت انتهاء العد التنازلي
+            </label>
+            <input
+              type="datetime-local"
+              required
+              value={targetDate}
+              onChange={(e) => setTargetDate(e.target.value)}
+              className="w-full px-3.5 py-2 rounded-lg bg-slate-800 text-white text-xs font-mono outline-none border border-slate-700"
+            />
+            <p className="text-[11px] text-slate-400">
+              سيظهر عدّاد حي بالساعات والدقائق والثواني متبقي حتى هذا التاريخ.
+            </p>
           </div>
         )}
 

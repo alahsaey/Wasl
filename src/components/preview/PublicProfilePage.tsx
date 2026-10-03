@@ -230,6 +230,24 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
         />
       )}
 
+      {/* Dynamic Animated Background Effects */}
+      {theme.bgEffect && theme.bgEffect !== 'none' && (
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+          {theme.bgEffect === 'stars' && (
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-400/20 via-transparent to-transparent animate-pulse" />
+          )}
+          {theme.bgEffect === 'particles' && (
+            <div className="absolute inset-0">
+              <div className="absolute top-1/4 left-1/4 w-36 h-36 bg-emerald-500/20 rounded-full blur-3xl animate-ping" />
+              <div className="absolute top-2/3 right-1/4 w-44 h-44 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
+            </div>
+          )}
+          {theme.bgEffect === 'glow' && (
+            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 via-indigo-500/15 to-amber-500/20 blur-3xl animate-pulse" />
+          )}
+        </div>
+      )}
+
       {/* Top bar for standalone public view (Always visible for easy Dashboard / Login access) */}
       {!isPreview && (
         <div className="relative z-10 w-full max-w-md mb-6 flex items-center justify-between px-1">
