@@ -514,45 +514,8 @@ const initStorage = () => {
       },
     ];
 
-    // Seed realistic analytics
+    // STRICT 100% REAL ANALYTICS (Zero fake seed data)
     const seedAnalytics: AnalyticsEvent[] = [];
-    const devices: ('mobile' | 'desktop' | 'tablet')[] = ['mobile', 'mobile', 'mobile', 'desktop', 'tablet'];
-    const browsers = ['Safari Mobile', 'Chrome Mobile', 'Chrome Desktop', 'Firefox', 'Edge'];
-    const referrers = ['Instagram Bio', 'X / Twitter', 'WhatsApp Direct', 'LinkedIn Post', 'Google Search', 'Direct Link'];
-
-    // Generate recent 30 days events for Saleh
-    const now = new Date();
-    for (let i = 25; i >= 0; i--) {
-      const date = new Date(now.getTime() - i * 86400000);
-      const viewsCount = Math.floor(Math.random() * 25) + 15;
-      for (let v = 0; v < viewsCount; v++) {
-        seedAnalytics.push({
-          id: `evt-${i}-${v}`,
-          userId: 'user-saleh-2',
-          type: 'page_view',
-          timestamp: new Date(date.getTime() + Math.random() * 86400000).toISOString(),
-          device: devices[Math.floor(Math.random() * devices.length)],
-          browser: browsers[Math.floor(Math.random() * browsers.length)],
-          referrer: referrers[Math.floor(Math.random() * referrers.length)],
-          country: 'المملكة العربية السعودية',
-        });
-      }
-      // Add clicks
-      const clicksCount = Math.floor(viewsCount * 0.45);
-      for (let c = 0; c < clicksCount; c++) {
-        seedAnalytics.push({
-          id: `evt-clk-${i}-${c}`,
-          userId: 'user-saleh-2',
-          type: 'link_click',
-          blockId: seedBlocks[Math.floor(Math.random() * 3)].id,
-          timestamp: new Date(date.getTime() + Math.random() * 86400000).toISOString(),
-          device: devices[Math.floor(Math.random() * devices.length)],
-          browser: browsers[Math.floor(Math.random() * browsers.length)],
-          referrer: referrers[Math.floor(Math.random() * referrers.length)],
-          country: 'المملكة العربية السعودية',
-        });
-      }
-    }
 
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(seedUsers));
     localStorage.setItem(STORAGE_KEYS.PASSWORDS, JSON.stringify(seedPasswords));
@@ -562,11 +525,12 @@ const initStorage = () => {
     localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(seedAuditLogs));
     localStorage.setItem(STORAGE_KEYS.ANALYTICS, JSON.stringify(seedAnalytics));
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
-    localStorage.setItem('wasl_storage_version', 'v5_preserve_user_data');
+    localStorage.setItem('wasl_storage_version', 'v6_real_analytics_only');
   } else {
-    // Preserve existing user data and edits across updates
-    const STORAGE_VERSION = 'v5_preserve_user_data';
+    // Purge any legacy mock analytics
+    const STORAGE_VERSION = 'v6_real_analytics_only';
     if (localStorage.getItem('wasl_storage_version') !== STORAGE_VERSION) {
+      localStorage.setItem(STORAGE_KEYS.ANALYTICS, JSON.stringify([]));
       localStorage.setItem('wasl_storage_version', STORAGE_VERSION);
     }
   }
@@ -1249,14 +1213,100 @@ export const StorageService = {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
 
+    // Country Breakdown Calculation (STRICT 100% REAL: ONLY countries that actually appeared in real recorded views!)
+    const countryMap: Record<string, { name: string; flag: string; count: number }> = {};
+
+    views.forEach((v) => {
+      let rawCountry = v.country || 'غير محدد';
+      let name = rawCountry;
+      let flag = '🌐';
+
+      if (rawCountry.includes('السعودية')) {
+        name = 'المملكة العربية السعودية';
+        flag = '🇸🇦';
+      } else if (rawCountry.includes('الإمارات')) {
+        name = 'الإمارات العربية المتحدة';
+        flag = '🇦🇪';
+      } else if (rawCountry.includes('الكويت')) {
+        name = 'الكويت';
+        flag = '🇰🇼';
+      } else if (rawCountry.includes('قطر')) {
+        name = 'قطر';
+        flag = '🇶🇦';
+      } else if (rawCountry.includes('مصر')) {
+        name = 'مصر';
+        flag = '🇪🇬';
+      } else if (rawCountry.includes('عُمان')) {
+        name = 'سلطنة عُمان';
+        flag = '🇴🇲';
+      } else if (rawCountry.includes('البحرين')) {
+        name = 'البحرين';
+        flag = '🇧🇭';
+      } else if (rawCountry.includes('الولايات المتحدة')) {
+        name = 'الولايات المتحدة';
+        flag = '🇺🇸';
+      } else if (rawCountry.includes('المملكة المتحدة')) {
+        name = 'المملكة المتحدة';
+        flag = '🇬🇧';
+      } else {
+        name = rawCountry.replace(/^[^\s]+\s*/, '') || 'زائر دولي';
+        flag = rawCountry.split(' ')[0] || '🌐';
+      }
+
+      const key = `${flag} ${name}`;
+      if (!countryMap[key]) {
+        countryMap[key] = { name, flag, count: 0 };
+      }
+      countryMap[key].count++;
+    });
+
+    const countries = Object.values(countryMap).sort((a, b) => b.count - a.count);
+
+    // Calculate link-by-link performance (Ranked by highest clicks first)
+    const blocksMap = new Map<string, number>();
+    clicks.forEach((c) => {
+      if (c.blockId) {
+        blocksMap.set(c.blockId, (blocksMap.get(c.blockId) || 0) + 1);
+      }
+    });
+
+    const userBlocks = StorageService.getUserBlocks(userId);
+    const userLinksPerformance = userBlocks
+      .map((b) => {
+        const realEventClicks = blocksMap.get(b.id) || 0;
+        const totalClicks = Math.max(realEventClicks, b.clicksCount || 0);
+        return {
+          id: b.id,
+          title: b.title || 'رابط بدون عنوان',
+          subtitle: b.subtitle || b.url || b.phone || '',
+          type: b.type,
+          url: b.url,
+          clicks: totalClicks,
+          isActive: b.isActive,
+        };
+      })
+      .sort((a, b) => b.clicks - a.clicks);
+
     return {
       totalViews: views.length,
       totalClicks: clicks.length,
       ctr: `${ctr}%`,
       devices,
       topReferrers,
+      countries,
+      userLinksPerformance,
       recentEvents: events.slice(-10).reverse(),
     };
+  },
+
+  clearAnalytics: (userId?: string) => {
+    if (!userId) {
+      localStorage.setItem(STORAGE_KEYS.ANALYTICS, JSON.stringify([]));
+    } else {
+      const remaining = StorageService.getAnalytics().filter((e) => e.userId !== userId);
+      localStorage.setItem(STORAGE_KEYS.ANALYTICS, JSON.stringify(remaining));
+    }
+    notifyListeners();
   },
 
   // --- AUDIT LOGS ---
@@ -1378,3 +1428,44 @@ export const StorageService = {
     return url;
   },
 };
+
+export function detectVisitorCountry(): { name: string; flag: string } {
+  if (typeof window === 'undefined') return { name: 'المملكة العربية السعودية', flag: '🇸🇦' };
+
+  try {
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    const lang = navigator.language || (navigator.languages && navigator.languages[0]) || '';
+
+    if (timeZone.includes('Riyadh') || lang.includes('SA')) {
+      return { name: 'المملكة العربية السعودية', flag: '🇸🇦' };
+    }
+    if (timeZone.includes('Dubai') || lang.includes('AE')) {
+      return { name: 'الإمارات العربية المتحدة', flag: '🇦🇪' };
+    }
+    if (timeZone.includes('Kuwait') || lang.includes('KW')) {
+      return { name: 'الكويت', flag: '🇰🇼' };
+    }
+    if (timeZone.includes('Qatar') || lang.includes('QA')) {
+      return { name: 'قطر', flag: '🇶🇦' };
+    }
+    if (timeZone.includes('Cairo') || lang.includes('EG')) {
+      return { name: 'مصر', flag: '🇪🇬' };
+    }
+    if (timeZone.includes('Muscat') || lang.includes('OM')) {
+      return { name: 'سلطنة عُمان', flag: '🇴🇲' };
+    }
+    if (timeZone.includes('Bahrain') || lang.includes('BH')) {
+      return { name: 'البحرين', flag: '🇧🇭' };
+    }
+    if (timeZone.includes('America') || lang.includes('US')) {
+      return { name: 'الولايات المتحدة', flag: '🇺🇸' };
+    }
+    if (timeZone.includes('London') || lang.includes('GB')) {
+      return { name: 'المملكة المتحدة', flag: '🇬🇧' };
+    }
+
+    return { name: 'المملكة العربية السعودية', flag: '🇸🇦' };
+  } catch {
+    return { name: 'المملكة العربية السعودية', flag: '🇸🇦' };
+  }
+}

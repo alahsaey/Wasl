@@ -1,5 +1,19 @@
-import React, { useMemo } from 'react';
-import { Eye, MousePointerClick, TrendingUp, Smartphone, Monitor, Tablet, Compass, Calendar } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import {
+  Eye,
+  MousePointerClick,
+  TrendingUp,
+  Smartphone,
+  Compass,
+  Globe,
+  Trash2,
+  Check,
+  Link as LinkIcon,
+  Crown,
+  Award,
+  ExternalLink,
+  Flame,
+} from 'lucide-react';
 import { StorageService } from '../../services/storage';
 
 interface AnalyticsOverviewProps {
@@ -7,9 +21,21 @@ interface AnalyticsOverviewProps {
 }
 
 export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ userId }) => {
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [clearedMsg, setClearedMsg] = useState(false);
+
   const summary = useMemo(() => {
     return StorageService.getUserAnalyticsSummary(userId);
-  }, [userId]);
+  }, [userId, refreshKey]);
+
+  const handleClearAnalytics = () => {
+    if (window.confirm('هل أنت تأكد من مسح وتصفير كافة بيانات الإحصائيات والزيارات الحالية للبدء من جديد حقيقياً 100%؟')) {
+      StorageService.clearAnalytics(userId);
+      setRefreshKey((prev) => prev + 1);
+      setClearedMsg(true);
+      setTimeout(() => setClearedMsg(false), 3000);
+    }
+  };
 
   const totalDevices = (summary.devices.mobile + summary.devices.desktop + summary.devices.tablet) || 1;
   const mobilePct = Math.round((summary.devices.mobile / totalDevices) * 100);
@@ -18,6 +44,39 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ userId }) 
 
   return (
     <div className="space-y-6 text-right font-cairo">
+      {/* Analytics Control Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+        <div>
+          <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
+            <span>إحصائيات وزيارات الصفحة الدقيقة 100%</span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+              تتبع حي حقيقي
+            </span>
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            يتم تسجيل وتتبع الزيارات والتفاعلات بدقة تامة دون أي تزييف أو توليد عشوائي.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {clearedMsg && (
+            <span className="text-xs font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-200">
+              <Check className="w-3.5 h-3.5" />
+              <span>تم تصفير البيانات بنجاح</span>
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleClearAnalytics}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 border border-rose-200 dark:border-rose-900 rounded-xl transition shadow-2xs"
+            title="مسح وتصفير كافة بيانات الزيارات الحالية والإحصائيات"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>مسح وتصفير البيانات</span>
+          </button>
+        </div>
+      </div>
+
       {/* Top 4 KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Views */}
@@ -77,6 +136,131 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ userId }) 
             {summary.topReferrers[0] ? `${summary.topReferrers[0].count} زيارة` : 'زيارات بدون وسيط'}
           </div>
         </div>
+      </div>
+
+      {/* User Links Performance Section (Ranked by Highest Clicks First) */}
+      <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h4 className="font-extrabold text-slate-900 dark:text-slate-100 text-sm sm:text-base flex items-center gap-2">
+              <Flame className="w-5 h-5 text-amber-500 animate-bounce" />
+              <span>إحصائية تفاعل الأزرار والروابط المضافة (الأعلى زيارة أولاً)</span>
+            </h4>
+            <p className="text-xs text-slate-500 mt-0.5">
+              ترتيب تلقائي لجميع الروابط المضافة من الأكثر نقراً وتفاعلاً إلى الأقل
+            </p>
+          </div>
+          <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
+            {summary.userLinksPerformance ? summary.userLinksPerformance.length : 0} عنصر مضاف
+          </span>
+        </div>
+
+        {!summary.userLinksPerformance || summary.userLinksPerformance.length === 0 ? (
+          <div className="text-center py-8 text-xs text-slate-400 bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+            لم تقم بإضافة أي روابط أو أزرار بعد. قم بإضافة عناصر جديدة من تبويب المحتوى لعرض إحصائياتها هنا!
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {summary.userLinksPerformance.map((link, idx) => {
+              const totalLinkClicks = summary.totalClicks || 1;
+              const pct = Math.round((link.clicks / totalLinkClicks) * 100);
+              const isTopRanked = idx === 0 && link.clicks > 0;
+
+              return (
+                <div
+                  key={link.id}
+                  className={`p-4 rounded-2xl border transition-all ${
+                    isTopRanked
+                      ? 'bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-amber-400/60 dark:border-amber-500/40 ring-2 ring-amber-400/20 shadow-md'
+                      : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    {/* Rank Badge & Link Details */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      {/* Rank Tag */}
+                      <div
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
+                          idx === 0
+                            ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                            : idx === 1
+                            ? 'bg-slate-300 text-slate-900 dark:bg-slate-700 dark:text-slate-100'
+                            : idx === 2
+                            ? 'bg-amber-700/30 text-amber-900 dark:text-amber-200 border border-amber-600/30'
+                            : 'bg-slate-200/80 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                        }`}
+                      >
+                        {idx === 0 ? <Crown className="w-5 h-5 fill-slate-950" /> : `#${idx + 1}`}
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-slate-900 dark:text-slate-100 truncate">
+                            {link.title}
+                          </span>
+                          {isTopRanked && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-amber-950 shadow-2xs shrink-0 flex items-center gap-1">
+                              <Flame className="w-3 h-3 fill-amber-950" />
+                              <span>الأكثر زيارة</span>
+                            </span>
+                          )}
+                          {!link.isActive && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">
+                              غير معطل
+                            </span>
+                          )}
+                        </div>
+                        {link.subtitle && (
+                          <p className="text-xs text-slate-500 truncate dir-ltr text-right mt-0.5">
+                            {link.subtitle}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Stats Metric */}
+                    <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 dark:border-slate-800">
+                      <div className="text-right sm:text-left">
+                        <div className="flex items-center gap-1.5 justify-end">
+                          <MousePointerClick className="w-3.5 h-3.5 text-emerald-600" />
+                          <span className="font-black text-sm text-emerald-600 dark:text-emerald-400 font-mono">
+                            {link.clicks.toLocaleString('ar-SA')}
+                          </span>
+                          <span className="text-xs text-slate-500 font-medium">نقرة / زيارة</span>
+                        </div>
+                        <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                          تُمثّل {pct}% من إجمالي النقرات
+                        </div>
+                      </div>
+
+                      {link.url && (
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-emerald-600 transition shadow-2xs"
+                          title="فتح الرابط في نافذة جديدة"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="w-full h-2 rounded-full bg-slate-200/80 dark:bg-slate-800 overflow-hidden mt-3">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        isTopRanked ? 'bg-gradient-to-r from-amber-500 to-emerald-500' : 'bg-emerald-500'
+                      }`}
+                      style={{ width: `${Math.max(pct, link.clicks > 0 ? 5 : 0)}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Breakdown: Devices & Top Referrers */}
@@ -162,6 +346,54 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({ userId }) 
             </div>
           )}
         </div>
+      </div>
+
+      {/* Country Breakdown Card */}
+      <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
+            <Globe className="w-4 h-4 text-emerald-600" />
+            <span>إحصائية وعدد الزيارات حسب كل دولة</span>
+          </h4>
+          <span className="text-xs text-slate-400 font-mono">
+            {summary.countries ? summary.countries.length : 0} دول مسجلة
+          </span>
+        </div>
+
+        {!summary.countries || summary.countries.length === 0 ? (
+          <div className="text-center py-6 text-xs text-slate-400">لا توجد بيانات زيارات دولية بعد</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {summary.countries.map((c, idx) => {
+              const pct = Math.round((c.count / (summary.totalViews || 1)) * 100);
+              return (
+                <div
+                  key={idx}
+                  className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between gap-3"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-xl shrink-0">{c.flag}</span>
+                    <div className="min-w-0">
+                      <span className="font-bold text-xs text-slate-900 dark:text-slate-100 block truncate">
+                        {c.name}
+                      </span>
+                      <div className="w-24 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden mt-1">
+                        <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-left shrink-0">
+                    <span className="font-black text-xs text-emerald-600 dark:text-emerald-400 block">
+                      {c.count.toLocaleString('ar-SA')} زيارة
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">{pct}%</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

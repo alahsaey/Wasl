@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { QrCode, Share2, CheckCircle2, LogIn, ArrowRight, Home } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { QrCode, Share2, CheckCircle2, LogIn, ArrowRight, Home, Eye } from 'lucide-react';
 import { User, Block, UserThemeConfig } from '../../types';
-import { StorageService, mergeBlocks } from '../../services/storage';
+import { StorageService, mergeBlocks, detectVisitorCountry } from '../../services/storage';
 import { CloudSyncService } from '../../services/cloudSync';
 import { BlockRenderer } from './BlockRenderer';
 import { QRCodeModal } from '../common/QRCodeModal';
@@ -80,12 +80,23 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
   // Track page view only once on real public page visit
   useEffect(() => {
     if (!isPreview) {
+      const geo = detectVisitorCountry();
+      let refText = 'زيارة مباشرة (Direct)';
+      if (document.referrer) {
+        try {
+          refText = new URL(document.referrer).hostname || document.referrer;
+        } catch {
+          refText = document.referrer;
+        }
+      }
+
       StorageService.recordEvent({
         userId: currentUser.id,
         type: 'page_view',
-        device: window.innerWidth < 768 ? 'mobile' : 'desktop',
-        browser: navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Safari',
-        referrer: document.referrer || 'Direct',
+        device: window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1024 ? 'tablet' : 'desktop',
+        browser: navigator.userAgent.includes('Chrome') ? 'Chrome' : navigator.userAgent.includes('Safari') ? 'Safari' : 'Browser',
+        referrer: refText,
+        country: `${geo.flag} ${geo.name}`,
       });
     }
   }, [isPreview, currentUser.id]);
@@ -122,6 +133,16 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
 
   const currentLayout = theme.layoutMode || 'innovative';
   const isGridMode = currentLayout === 'innovative' || currentLayout === 'modern';
+
+  // Calculate live total visits count for current user
+  const totalVisitsCount = useMemo(() => {
+    try {
+      const summary = StorageService.getUserAnalyticsSummary(currentUser.id);
+      return Math.max(summary.totalViews, 1);
+    } catch {
+      return 1;
+    }
+  }, [currentUser.id]);
 
   // Helper to render blocks with grid grouping
   const renderBlocksList = () => {
@@ -210,29 +231,35 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
 
   return (
     <div
-      className={`relative min-h-screen w-full transition-colors duration-300 font-cairo flex flex-col items-center overflow-x-hidden ${
-        isPreview ? 'py-6 px-4' : 'py-6 px-4 pb-20'
+      className={`relative w-full transition-colors duration-300 font-cairo flex flex-col items-center overflow-x-hidden ${
+        isPreview ? 'min-h-full py-6 px-4' : 'min-h-screen py-6 px-4 pb-20'
       }`}
       style={{
         ...getContainerBackground(),
         color: theme.textColor,
       }}
     >
-      {/* Custom Background Image Overlay (Single, non-repeating image with transparency) */}
+      {/* Custom Background Image Overlay (Contained in preview mode to prevent leakage into dashboard) */}
       {theme.backgroundImageUrl && (
         <div
-          className="fixed inset-0 pointer-events-none z-0 bg-no-repeat bg-cover bg-center transition-all duration-500"
+          className={`${
+            isPreview ? 'absolute inset-0' : 'fixed inset-0'
+          } pointer-events-none z-0 bg-no-repeat bg-cover bg-center transition-all duration-500`}
           style={{
             backgroundImage: `url(${theme.backgroundImageUrl})`,
             opacity: theme.bgImageOpacity !== undefined ? theme.bgImageOpacity : 0.35,
-            backgroundAttachment: 'fixed',
+            backgroundAttachment: isPreview ? 'scroll' : 'fixed',
           }}
         />
       )}
 
       {/* Dynamic Animated Background Effects */}
       {theme.bgEffect && theme.bgEffect !== 'none' && (
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div
+          className={`${
+            isPreview ? 'absolute inset-0' : 'fixed inset-0'
+          } pointer-events-none z-0 overflow-hidden`}
+        >
           {theme.bgEffect === 'stars' && (
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-400/20 via-transparent to-transparent animate-pulse" />
           )}
@@ -310,6 +337,15 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
               {currentUser.bio}
             </p>
           )}
+
+          {/* Visits Counter Badge for Profile */}
+          <div
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md bg-white/20 border border-white/20 shadow-xs transition-all hover:scale-105"
+            title="إجمالي عدد المشاهدات والزيارات المسجلة لهذه الصفحة"
+          >
+            <Eye className="w-3.5 h-3.5 text-emerald-400 animate-pulse shrink-0" />
+            <span>{totalVisitsCount.toLocaleString('ar-SA')} زيارة</span>
+          </div>
         </div>
 
         {/* Dynamic Blocks List (Grid 2-Columns Layout default or List) */}
