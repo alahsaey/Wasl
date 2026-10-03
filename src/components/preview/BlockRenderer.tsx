@@ -33,7 +33,8 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
 }) => {
   if (!block.isActive) return null;
 
-  const gridMode = isGridMode !== undefined ? isGridMode : (theme.layoutMode || 'grid') === 'grid';
+  const currentLayout = theme.layoutMode || 'innovative';
+  const gridMode = isGridMode !== undefined ? isGridMode : currentLayout === 'innovative' || currentLayout === 'modern';
 
   const handleClick = (e: React.MouseEvent, url?: string) => {
     if (onBlockClick) {
@@ -60,6 +61,10 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
 
   // Compute button styling based on theme
   const getButtonClasses = () => {
+    if (currentLayout === 'modern') {
+      return 'w-full transition-all duration-300 transform active:scale-[0.98] hover:-translate-y-0.5 rounded-3xl bg-gradient-to-b from-white/25 via-white/12 to-white/5 border border-white/35 backdrop-blur-xl shadow-lg hover:border-emerald-400/80 hover:shadow-emerald-500/20 text-current';
+    }
+
     const radius = theme.borderRadius || 'rounded-2xl';
 
     let shadowClass = '';

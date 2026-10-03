@@ -120,7 +120,8 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({
       ? `${window.location.origin}/?u=${currentUser.username}`
       : `https://wasl-sa.netlify.app/?u=${currentUser.username}`;
 
-  const isGridMode = (theme.layoutMode || 'grid') === 'grid';
+  const currentLayout = theme.layoutMode || 'innovative';
+  const isGridMode = currentLayout === 'innovative' || currentLayout === 'modern';
 
   // Helper to render blocks with grid grouping
   const renderBlocksList = () => {

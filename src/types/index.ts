@@ -125,6 +125,8 @@ export type ButtonStyle = 'solid' | 'outline' | 'soft' | 'glass';
 export type ButtonShadow = 'none' | 'subtle' | 'glow' | 'elevated';
 export type ImageShape = 'circle' | 'rounded' | 'squircle' | 'square';
 
+export type LayoutTemplateId = 'classic' | 'innovative' | 'modern';
+
 export interface UserThemeConfig {
   presetId: ThemePresetId;
   primaryColor: string;
@@ -142,7 +144,7 @@ export interface UserThemeConfig {
   showBranding: boolean;
   backgroundImageUrl?: string;
   bgImageOpacity?: number;
-  layoutMode?: 'grid' | 'list'; // 'grid' (2 items per row, icon top, text bottom) | 'list' (1 item per row)
+  layoutMode?: LayoutTemplateId; // 'classic' (old 1-col list) | 'innovative' (new 2-col grid) | 'modern' (creative 2-col glass pill grid)
 }
 
 export interface AnalyticsEvent {

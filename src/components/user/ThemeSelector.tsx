@@ -1,6 +1,6 @@
 import React from 'react';
-import { Palette, Check, Sparkles, Layers, Sliders, Type, Shapes, Image as ImageIcon, LayoutList } from 'lucide-react';
-import { UserThemeConfig, ThemePresetId, ButtonStyle, ButtonShadow, ImageShape } from '../../types';
+import { Palette, Check, Sparkles, Layers, Sliders, Type, Shapes, Image as ImageIcon, LayoutList, LayoutGrid, Compass } from 'lucide-react';
+import { UserThemeConfig, ThemePresetId, ButtonStyle, ButtonShadow, ImageShape, LayoutTemplateId } from '../../types';
 import { THEME_PRESETS } from '../../services/storage';
 import { ImageUploadInput } from '../common/ImageUploadInput';
 
@@ -148,51 +148,127 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ currentTheme, onCh
         </div>
       </section>
 
-      {/* 3. Button Styles & Layout Grid Mode */}
+      {/* 3. Button Layout Templates */}
       <section className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-        <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
-          <Sliders className="w-4 h-4 text-emerald-600" />
-          <span>تخطيط وعرض أزرار التواصل والروابط</span>
-        </h4>
+        <div>
+          <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
+            <LayoutGrid className="w-4 h-4 text-emerald-600" />
+            <span>قوالب عرض وتنسيق أزرار التواصل والروابط</span>
+          </h4>
+          <p className="text-xs text-slate-500 mt-0.5">
+            اختر القالب المفضل لديك لعرض أزرار وروابط حسابك بالشكل المناسب لهويتك
+          </p>
+        </div>
 
-        {/* Layout Mode Selection (Grid 2-Columns vs List 1-Column) */}
-        <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
-          <label className="text-xs font-bold text-slate-900 dark:text-slate-100 block">
-            طريقة عرض الأزرار والروابط في صفحتك
-          </label>
-          <div className="grid grid-cols-2 gap-2.5">
-            <button
-              type="button"
-              onClick={() => onChange({ layoutMode: 'grid' })}
-              className={`p-3 rounded-xl border text-right transition flex flex-col items-center justify-center gap-1.5 ${
-                (currentTheme.layoutMode || 'grid') === 'grid'
-                  ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-bold dark:bg-emerald-950 dark:text-emerald-200 ring-2 ring-emerald-500/20'
-                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300'
-              }`}
-            >
-              <div className="flex items-center gap-1.5 text-xs">
-                <LayoutList className="w-4 h-4 text-emerald-600" />
-                <span>شبكة (زرّين في الصف)</span>
+        {/* 3 Layout Templates Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Template 1: Classic */}
+          <button
+            type="button"
+            onClick={() => onChange({ layoutMode: 'classic' })}
+            className={`p-3.5 rounded-2xl border text-right transition-all flex flex-col justify-between gap-3 relative group ${
+              (currentTheme.layoutMode || 'innovative') === 'classic'
+                ? 'border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/20 shadow-md'
+                : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+            }`}
+          >
+            {/* Visual Miniature Preview */}
+            <div className="w-full h-16 rounded-xl bg-slate-100 dark:bg-slate-800/80 p-2 flex flex-col justify-center gap-1.5 overflow-hidden">
+              <div className="w-full h-5 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center px-2 justify-between">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+                <div className="w-12 h-1.5 bg-slate-400/50 rounded-full" />
               </div>
-              <span className="text-[10px] opacity-75 text-center">أيقونة بالمنتصف بالأعلى والاسم تحتها مباشرة</span>
-            </button>
+              <div className="w-full h-5 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center px-2 justify-between">
+                <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 shrink-0" />
+                <div className="w-10 h-1.5 bg-slate-400/50 rounded-full" />
+              </div>
+            </div>
 
-            <button
-              type="button"
-              onClick={() => onChange({ layoutMode: 'list' })}
-              className={`p-3 rounded-xl border text-right transition flex flex-col items-center justify-center gap-1.5 ${
-                currentTheme.layoutMode === 'list'
-                  ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-bold dark:bg-emerald-950 dark:text-emerald-200 ring-2 ring-emerald-500/20'
-                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300'
-              }`}
-            >
-              <div className="flex items-center gap-1.5 text-xs">
-                <Sliders className="w-4 h-4 text-emerald-600" />
-                <span>قائمة (زر واحد بالصف)</span>
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-xs text-slate-900 dark:text-slate-100">قالب الكلاسيك</span>
+                {(currentTheme.layoutMode || 'innovative') === 'classic' && (
+                  <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                )}
               </div>
-              <span className="text-[10px] opacity-75 text-center">أزرار عريضة ممتدة بعرض الصفحة</span>
-            </button>
-          </div>
+              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                التصميم التقليدي الممتد بعرض الصفحة (زر واحد في كل صف مع الأيقونة على الجانب والاسم بجانبها).
+              </p>
+            </div>
+          </button>
+
+          {/* Template 2: Innovative */}
+          <button
+            type="button"
+            onClick={() => onChange({ layoutMode: 'innovative' })}
+            className={`p-3.5 rounded-2xl border text-right transition-all flex flex-col justify-between gap-3 relative group ${
+              (currentTheme.layoutMode || 'innovative') === 'innovative'
+                ? 'border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/20 shadow-md'
+                : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+            }`}
+          >
+            {/* Visual Miniature Preview */}
+            <div className="w-full h-16 rounded-xl bg-slate-100 dark:bg-slate-800/80 p-2 grid grid-cols-2 gap-1.5 overflow-hidden">
+              <div className="h-full rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex flex-col items-center justify-center p-1 gap-1">
+                <div className="w-3 h-3 rounded-md bg-emerald-500" />
+                <div className="w-8 h-1 bg-slate-400/60 rounded-full" />
+              </div>
+              <div className="h-full rounded-lg bg-violet-500/20 border border-violet-500/30 flex flex-col items-center justify-center p-1 gap-1">
+                <div className="w-3 h-3 rounded-md bg-violet-500" />
+                <div className="w-8 h-1 bg-slate-400/60 rounded-full" />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-xs text-slate-900 dark:text-slate-100">قالب المبتكر</span>
+                {(currentTheme.layoutMode || 'innovative') === 'innovative' && (
+                  <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                )}
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                التصميم الشبكي العصري (زرّين في الصف الواحد مع الأيقونة في المنتصف بالأعلى والاسم تحتها مباشرة).
+              </p>
+            </div>
+          </button>
+
+          {/* Template 3: Modern */}
+          <button
+            type="button"
+            onClick={() => onChange({ layoutMode: 'modern' })}
+            className={`p-3.5 rounded-2xl border text-right transition-all flex flex-col justify-between gap-3 relative group ${
+              currentTheme.layoutMode === 'modern'
+                ? 'border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/20 shadow-md'
+                : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+            }`}
+          >
+            {/* Visual Miniature Preview */}
+            <div className="w-full h-16 rounded-xl bg-slate-900 p-2 grid grid-cols-2 gap-1.5 overflow-hidden border border-emerald-500/20 shadow-inner">
+              <div className="h-full rounded-xl bg-gradient-to-b from-white/20 to-white/5 border border-white/30 flex flex-col items-center justify-center p-1 gap-1 shadow-xs">
+                <div className="w-3.5 h-3.5 rounded-full bg-emerald-400 shadow-sm" />
+                <div className="w-7 h-1 bg-white/80 rounded-full" />
+              </div>
+              <div className="h-full rounded-xl bg-gradient-to-b from-white/20 to-white/5 border border-white/30 flex flex-col items-center justify-center p-1 gap-1 shadow-xs">
+                <div className="w-3.5 h-3.5 rounded-full bg-cyan-400 shadow-sm" />
+                <div className="w-7 h-1 bg-white/80 rounded-full" />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-xs text-slate-900 dark:text-slate-100 flex items-center gap-1">
+                  <span>قالب العصري الفاخر</span>
+                  <Sparkles className="w-3 h-3 text-amber-500" />
+                </span>
+                {currentTheme.layoutMode === 'modern' && (
+                  <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                )}
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                تصميم الكروت الزجاجية العائمة بهالة ضوئية متوهجة وانحناءات انسيابية دائرية (زرّين بالصف).
+              </p>
+            </div>
+          </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
